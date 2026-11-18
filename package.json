@@ -5,9 +5,9 @@
   "type": "module",
   "main": "servidor.js",
   "scripts": {
-    "start": "node servidor.js",
-    "test": "node --test \"pruebas/**/*.test.js\"",
-    "demo": "node herramientas/datos_demo.js"
+    "start": "node --experimental-sqlite servidor.js",
+    "test": "node --experimental-sqlite --test \"pruebas/**/*.test.js\"",
+    "demo": "node --experimental-sqlite herramientas/datos_demo.js"
   },
   "engines": {
     "node": ">=22.5.0"
