@@ -6,13 +6,15 @@ Plataforma cívica web y móvil para el reporte georreferenciado, seguimiento co
 
 ## Características Principales
 
-- **Georreferenciación y Validación Espacial**: Verificación estricta de límites geográficos dentro del polígono distrital de Cartagena y asignación automática de localidad y barrio.
-- **Prevención Comunitaria de Duplicados**: Detección de fallas activas del mismo servicio en un radio de 120 metros en las últimas 24 horas (Código HTTP `409 Conflict`), permitiendo forzar el registro si se trata de un evento independiente.
-- **Ponderación Colaborativa y Capa de Calor**: Cálculo dinámico del peso de cada incidencia mediante la fórmula $P = 1 + 0.5 \times C$ (donde $C$ es el número de confirmaciones ciudadanas «A mí también me afecta»). Generación de mapas de calor para Leaflet.
-- **Votación Comunitaria de Solución**: Mecanismo participativo («¿Ya se solucionó?») que evalúa en tiempo real si una falla debe transicionar a estado `Solucionado` o volver a `Reportado`.
-- **Cortes Programados Oficiales**: Módulo administrativo para empresas de servicios públicos (Afinia, Acuacar, Surtigas) con control de fechas y cierre automático al expirar.
-- **Moderación y Auditoría**: Archivo justificado de incidencias, fusión de duplicados con consolidación de confirmaciones y registro cronológico inmutable en bitácora de auditoría.
-- **Estadísticas Cívicas y Exportación**: Serie temporal pública con detección de picos/alertas y reporte consolidado con exportación a formato CSV con codificación UTF-8.
+- **Cobertura y Visualización Distrital Completa**: Exploración interactiva de todas las fallas y cortes en el mapa de todo el Distrito de Cartagena en tiempo real, con filtros por servicio público, sector/localidad y ventana temporal.
+- **Georreferenciación y Validación Espacial**: Verificación estricta de límites geográficos dentro del polígono distrital de Cartagena y asignación automática de localidad y barrio según las coordenadas del reporte.
+- **Detección Preventiva de Duplicados en Reportes (Radio 120 m)**: Cuando un ciudadano reporta una falla desde su ubicación actual, el sistema analiza si en su misma calle o manzana (radio de 120 metros) ya existe un reporte activo del mismo servicio en las últimas 24 horas. En caso afirmativo, le permite sumarse a la falla existente o forzar un nuevo registro independiente si corresponde.
+- **Control de Proximidad para Participación Cívica (Radio 1 km)**: Para proteger la seriedad y veracidad de los datos, los ciudadanos pueden confirmar incidencias («A mí también me afecta») o votar si la falla fue resuelta («¿Ya se solucionó?») únicamente si su ubicación GPS se encuentra a una distancia máxima de 1 km del punto del incidente.
+- **Ponderación Colaborativa y Capa de Calor**: Cálculo dinámico del peso de cada incidencia mediante la fórmula $P = 1 + 0.5 \times C$ (donde $C$ es el número de confirmaciones ciudadanas). Generación de mapas de calor para Leaflet.
+- **Votación Comunitaria de Solución**: Mecanismo participativo en tiempo real que evalúa mediante mayoría comunitaria si una falla transiciona a estado `Solucionado` o regresa a `Reportado`.
+- **Cortes Programados Oficiales**: Módulo administrativo para empresas prestadoras de servicios públicos (Afinia, Acuacar, Surtigas) con control de fechas y cierre automático al expirar.
+- **Moderación y Auditoría**: Archivo justificado de incidencias, fusión de reportes duplicados con consolidación de confirmaciones y registro cronológico inmutable en bitácora de auditoría.
+- **Estadísticas Cívicas y Exportación**: Serie temporal pública con desglose por servicio, métricas de resolución y exportación administrativa a formato CSV con codificación UTF-8.
 
 ---
 
@@ -34,22 +36,11 @@ cd "Proyecto Isoft"
 ```bash
 node servidor.js
 ```
-*(El servidor iniciará por defecto en `http://localhost:3000` utilizando SQLite en memoria con esquema y datos semilla cargados).*
+*(El servidor iniciará por defecto en `http://localhost:3000` utilizando SQLite persistente con esquema y datos semilla cargados).*
 
 ### 3. Abrir la aplicación en el navegador:
 - **Portal Ciudadano**: [http://localhost:3000](http://localhost:3000)
 - **Consola de Administración**: [http://localhost:3000/admin.html](http://localhost:3000/admin.html)
-
----
-
-## Datos de Demostración (Demo Data)
-
-Para poblar la base de datos con ~20 incidencias reales distribuidas a lo largo de Cartagena (Centro Histórico, Bocagrande, Manga, Olaya Herrera, El Pozón, Nelson Mandela, etc.), confirmaciones comunitarias, votaciones ciudadanas y cortes programados:
-
-```bash
-node herramientas/datos_demo.js
-```
-*(Asegúrese de que el servidor `node servidor.js` esté ejecutándose previamente en otra terminal).*
 
 ---
 
@@ -129,8 +120,6 @@ Proyecto Isoft/
 ├── pruebas/                  # Batería de pruebas automatizadas (node:test)
 │   ├── dominio.test.js       # Pruebas unitarias de reglas de negocio
 │   └── api.test.js           # Pruebas de integración de la API REST (10 RF + Seguridad)
-├── herramientas/             # Scripts de utilidad
-│   └── datos_demo.js         # Poblador de datos de demostración sobre Cartagena
 ├── anexos/                   # Scripts y especificaciones adicionales
 │   └── bd_postgresql.sql     # Esquema de producción para PostgreSQL 14+ y PostGIS 3+
 ├── servidor.js               # Punto de entrada de ejecución del servidor

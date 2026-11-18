@@ -1411,11 +1411,22 @@ export class VistaEstadisticas {
       if (contenedorServicios) {
         const conteoPorServicio = res.porServicio || {};
 
-        const datosServicios = Object.values(COLORES_SERVICIOS).map((s) => ({
-          etiqueta: s.nombre,
-          valor: conteoPorServicio[s.nombre] || 0,
-          color: s.color,
-        }));
+        const mapeoNombres = {
+          Energía: 'Energía eléctrica',
+          Agua: 'Agua potable',
+          Gas: 'Gas natural',
+          Alcantarillado: 'Alcantarillado',
+          Telecomunicaciones: 'Telecomunicaciones',
+        };
+
+        const datosServicios = Object.values(COLORES_SERVICIOS).map((s) => {
+          const nombreBd = mapeoNombres[s.nombre] || s.nombre;
+          return {
+            etiqueta: s.nombre,
+            valor: conteoPorServicio[nombreBd] ?? conteoPorServicio[s.nombre] ?? 0,
+            color: s.color,
+          };
+        });
 
         Graficas.barrasHorizontales(contenedorServicios, datosServicios);
       }

@@ -6,8 +6,7 @@
   "main": "servidor.js",
   "scripts": {
     "start": "node --experimental-sqlite servidor.js",
-    "test": "node --experimental-sqlite --test \"pruebas/**/*.test.js\"",
-    "demo": "node --experimental-sqlite herramientas/datos_demo.js"
+    "test": "node --experimental-sqlite --test \"pruebas/**/*.test.js\""
   },
   "engines": {
     "node": ">=22.5.0"
