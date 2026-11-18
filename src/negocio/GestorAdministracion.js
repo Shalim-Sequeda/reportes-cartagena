@@ -308,7 +308,13 @@ export class GestorEstadisticas {
       });
     }
 
-    // Ubicar eventos en intervalos
+    // Ubicar eventos en intervalos y calcular agregados
+    let activas = 0;
+    let solucionadas = 0;
+    let archivadas = 0;
+    let totalConfirmaciones = 0;
+    const conteoServicios = {};
+
     for (const ev of eventos) {
       const fechaEv = new Date(ev.fecha_creacion || ev.fechaCreacion).getTime();
       const indice = Math.min(
@@ -318,6 +324,19 @@ export class GestorEstadisticas {
       if (puntos[indice]) {
         puntos[indice].eventos++;
       }
+
+      if (ev.estado === 'Solucionado') {
+        solucionadas++;
+      } else if (ev.estado === 'Archivado') {
+        archivadas++;
+      } else {
+        activas++;
+      }
+
+      totalConfirmaciones += Number(ev.confirmaciones) || 0;
+
+      const nomSrv = ev.servicio_nombre || 'Otro';
+      conteoServicios[nomSrv] = (conteoServicios[nomSrv] || 0) + 1;
     }
 
     const totalEventos = eventos.length;
@@ -339,6 +358,11 @@ export class GestorEstadisticas {
     return {
       ventana,
       totalEventos,
+      activas,
+      solucionadas,
+      archivadas,
+      totalConfirmaciones,
+      porServicio: conteoServicios,
       promedioPorIntervalo: Number(promedio.toFixed(2)),
       maximoEventosIntervalo: maxEventos,
       nivelAlerta,

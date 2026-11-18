@@ -1539,6 +1539,15 @@ a {
 }
 
    /* Sobrescrituras de Leaflet */
+.leaflet-bottom.leaflet-right .leaflet-control-zoom {
+  margin-bottom: 144px;
+  margin-right: 16px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-md);
+  box-shadow: var(--sombra-md);
+  overflow: hidden;
+}
+
 .leaflet-popup-content-wrapper {
   border-radius: var(--radio-md);
   box-shadow: var(--sombra-md);

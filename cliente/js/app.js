@@ -1340,7 +1340,7 @@ export class VistaEstadisticas {
           </div>
           <div class="tarjeta-metrica">
             <span class="metrica-numero" id="mConfirmaciones">-</span>
-            <span class="metrica-etiqueta">Ciudadanos</span>
+            <span class="metrica-etiqueta">Confirmaciones</span>
           </div>
         </div>
 
@@ -1391,14 +1391,14 @@ export class VistaEstadisticas {
         textoAlerta.textContent = `Estado Cívico: Nivel ${nivel} (${res.totalEventos || 0} eventos registrados en la ventana)`;
       }
 
-      // Métricas
+      // Métricas reales
       const elActivas = document.getElementById('mTotalFallas');
       const elSol = document.getElementById('mSolucionadas');
       const elConf = document.getElementById('mConfirmaciones');
 
-      if (elActivas) elActivas.textContent = String(res.totalEventos || 0);
-      if (elSol) elSol.textContent = String(res.maximoEventosIntervalo || 0);
-      if (elConf) elConf.textContent = String(res.promedioPorIntervalo || 0);
+      if (elActivas) elActivas.textContent = String(res.activas ?? res.totalEventos ?? 0);
+      if (elSol) elSol.textContent = String(res.solucionadas ?? 0);
+      if (elConf) elConf.textContent = String(res.totalConfirmaciones ?? 0);
 
       // Gráfica de línea temporal
       const contenedorLinea = document.getElementById('graficaLineaContenedor');
@@ -1406,18 +1406,10 @@ export class VistaEstadisticas {
         Graficas.linea(contenedorLinea, puntos, { color: '#D0021B' });
       }
 
-      // Gráfica de servicios
+      // Gráfica de servicios con conteo real
       const contenedorServicios = document.getElementById('graficaServiciosContenedor');
       if (contenedorServicios) {
-        // Calcular conteo por servicio a partir de los puntos
-        const conteoPorServicio = {};
-        for (const p of rawPuntos) {
-          if (p.porServicio && typeof p.porServicio === 'object') {
-            for (const [srv, cant] of Object.entries(p.porServicio)) {
-              conteoPorServicio[srv] = (conteoPorServicio[srv] || 0) + Number(cant || 0);
-            }
-          }
-        }
+        const conteoPorServicio = res.porServicio || {};
 
         const datosServicios = Object.values(COLORES_SERVICIOS).map((s) => ({
           etiqueta: s.nombre,
