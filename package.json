@@ -9,6 +9,9 @@
     "test": "node --test \"pruebas/**/*.test.js\"",
     "demo": "node herramientas/datos_demo.js"
   },
+  "engines": {
+    "node": ">=22.5.0"
+  },
   "keywords": ["cartagena", "servicios-publicos", "reportes", "ciudadanos"],
   "license": "MIT"
 }
