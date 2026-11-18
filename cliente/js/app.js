@@ -323,22 +323,27 @@ export class VistaMapa {
     const contenedor = document.getElementById('mapa');
     if (!contenedor || typeof L === 'undefined') return;
 
-    // Centrado en Cartagena de indias (10.4, -75.5)
+    // Centrado en Cartagena de indias (10.4, -75.5) con aceleracion canvas para moviles
     this.#mapa = L.map(contenedor, {
       center: [10.4, -75.5],
       zoom: 13,
       minZoom: 11,
       maxZoom: 18,
       zoomControl: false,
+      preferCanvas: true,
+      fadeAnimation: false,
     });
 
-    // Control de zoom posicionado
-    L.control.zoom({ position: 'bottomright' }).addTo(this.#mapa);
+    // Control de zoom posicionado en la esquina superior derecha (sin interferir con botones inferiores)
+    L.control.zoom({ position: 'topright' }).addTo(this.#mapa);
 
-    // OpenStreetMap tiles estándar libres y sin API key
+    // OpenStreetMap tiles estándar con optimizacion de renderizado para movil
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19,
+      updateWhenIdle: true,
+      updateWhenZooming: false,
+      keepBuffer: 3,
     }).addTo(this.#mapa);
 
     // Restringir a límites de Cartagena
@@ -448,7 +453,7 @@ export class VistaMapa {
           console.warn('No fue posible obtener ubicación gps:', err.message);
           resolve(null);
         },
-        { enableHighAccuracy: true, timeout: 6000, maximumAge: 30000 }
+        { enableHighAccuracy: false, timeout: 3500, maximumAge: 60000 }
       );
     });
   }
@@ -512,8 +517,8 @@ export class VistaMapa {
 
     if (puntosCalor.length > 0) {
       this.#capaCalor = L.heatLayer(puntosCalor, {
-        radius: 26,
-        blur: 18,
+        radius: 22,
+        blur: 12,
         maxZoom: 16,
         gradient: {
           0.2: '#D97706', // Amarillo energía
@@ -919,13 +924,28 @@ export class FormularioReporte {
     this.#validarPasoActual();
   }
 
+  /**
+   * Actualiza las coordenadas de forma transparente si el GPS resuelve en segundo plano.
+   * @param {number} lat
+   * @param {number} lon
+   */
+  actualizarUbicacionGps(lat, lon) {
+    if (this.#datos.origenUbicacion === 'manual' && this.#datos.latitud === 10.4237) {
+      this.#actualizarCoordenadas(lat, lon, 'gps');
+      if (this.#miniMapa && this.#marcadorUbicacion) {
+        this.#miniMapa.setView([lat, lon], 16);
+        this.#marcadorUbicacion.setLatLng([lat, lon]);
+      }
+    }
+  }
+
   #obtenerUbicacionGps() {
     if (!navigator.geolocation) {
       Toast.mostrar('Tu navegador no soporta geolocalización.', 'error');
       return;
     }
 
-    Toast.mostrar('Obteniendo ubicación GPS...', 'info', 2000);
+    Toast.mostrar('Obteniendo ubicación GPS...', 'info', 1500);
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -953,7 +973,7 @@ export class FormularioReporte {
       (err) => {
         Toast.mostrar('No se pudo obtener el GPS: ' + err.message, 'error');
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: false, timeout: 3500, maximumAge: 60000 }
     );
   }
 
@@ -1245,7 +1265,7 @@ export class FichaIncidencia {
         navigator.geolocation.getCurrentPosition(
           (pos) => resolve({ latitud: pos.coords.latitude, longitud: pos.coords.longitude }),
           () => resolve(null),
-          { timeout: 3500, enableHighAccuracy: true }
+          { timeout: 2500, enableHighAccuracy: false, maximumAge: 60000 }
         );
       });
 
@@ -1529,7 +1549,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const formularioReporte = new FormularioReporte(api, modal, (id) => {
     vistaMapa.cargar(filtrosActuales);
-    fichaIncidencia.mostrar(id);
   });
 
   const vistaEstadisticas = new VistaEstadisticas(api, modal);
@@ -1538,12 +1557,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // 2. Conectar botones flotantes
-  document.getElementById('btnReportar')?.addEventListener('click', async () => {
-    let ubicacion = vistaMapa.ubicacionUsuario;
-    if (!ubicacion) {
-      ubicacion = await vistaMapa.geolocalizarUsuario(false);
+  document.getElementById('btnReportar')?.addEventListener('click', () => {
+    // Abrir inmediatamente el modal sin retraso
+    formularioReporte.iniciar(vistaMapa.ubicacionUsuario);
+    // Si no había ubicación previa, solicitarla en segundo plano para el paso 3
+    if (!vistaMapa.ubicacionUsuario) {
+      vistaMapa.geolocalizarUsuario(false).then((loc) => {
+        if (loc) {
+          formularioReporte.actualizarUbicacionGps(loc.lat, loc.lon);
+        }
+      });
     }
-    formularioReporte.iniciar(ubicacion);
   });
 
   document.getElementById('btnMiUbicacion')?.addEventListener('click', () => {
