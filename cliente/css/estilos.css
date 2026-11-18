@@ -132,6 +132,10 @@ a {
   outline-offset: 2px;
 }
 
+[hidden] {
+  display: none !important;
+}
+
    /* Barra de estado de conexión */
 .barra-estado {
   position: absolute;

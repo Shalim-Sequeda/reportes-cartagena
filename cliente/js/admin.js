@@ -50,13 +50,29 @@ export class ConsolaAdmin {
 
   // Manejo de sesión y autenticación
   #mostrarLogin() {
-    document.getElementById('pantallaLogin')?.removeAttribute('hidden');
-    document.getElementById('consolaAdmin')?.setAttribute('hidden', 'true');
+    const pantallaLogin = document.getElementById('pantallaLogin');
+    const consolaAdmin = document.getElementById('consolaAdmin');
+    if (pantallaLogin) {
+      pantallaLogin.hidden = false;
+      pantallaLogin.style.display = 'flex';
+    }
+    if (consolaAdmin) {
+      consolaAdmin.hidden = true;
+      consolaAdmin.style.display = 'none';
+    }
   }
 
   #mostrarConsola() {
-    document.getElementById('pantallaLogin')?.setAttribute('hidden', 'true');
-    document.getElementById('consolaAdmin')?.removeAttribute('hidden');
+    const pantallaLogin = document.getElementById('pantallaLogin');
+    const consolaAdmin = document.getElementById('consolaAdmin');
+    if (pantallaLogin) {
+      pantallaLogin.hidden = true;
+      pantallaLogin.style.display = 'none';
+    }
+    if (consolaAdmin) {
+      consolaAdmin.hidden = false;
+      consolaAdmin.style.display = 'flex';
+    }
   }
 
   #cerrarSesionLocal() {
