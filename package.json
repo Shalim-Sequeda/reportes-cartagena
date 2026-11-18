@@ -1,0 +1,14 @@
+{
+  "name": "cartagena-reportes-ciudadanos",
+  "version": "1.0.0",
+  "description": "Sistema de reporte ciudadano de fallas e incidencias de servicios públicos en Cartagena de Indias",
+  "type": "module",
+  "main": "servidor.js",
+  "scripts": {
+    "start": "node servidor.js",
+    "test": "node --test \"pruebas/**/*.test.js\"",
+    "demo": "node herramientas/datos_demo.js"
+  },
+  "keywords": ["cartagena", "servicios-publicos", "reportes", "ciudadanos"],
+  "license": "MIT"
+}

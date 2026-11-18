@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0">
+  <meta name="theme-color" content="#D0021B">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Reportes CTG">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="img/icon.svg">
+  <title>Reportes Ciudadanos — Cartagena</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+  <!-- Barra de estado de conexión -->
+  <div id="barraEstado" class="barra-estado" role="status" aria-live="polite">
+    <span class="estado-punto"></span>
+    <span class="estado-texto">Conectado</span>
+  </div>
+
+  <!-- Barra de filtros superior -->
+  <nav id="barraFiltros" class="barra-filtros" aria-label="Filtros de incidencias">
+    <div class="filtros-servicios-envoltorio">
+      <button id="btnScrollFiltrosIzq" class="btn-scroll-filtros" aria-label="Desplazar servicios hacia la izquierda" type="button" title="Desplazar a la izquierda">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+
+      <div class="filtros-scroll" id="filtrosScrollContenedor">
+        <div class="filtros-grupo filtros-servicios" id="filtrosServicios">
+          <!-- Chips de servicio inyectados por JavaScript -->
+        </div>
+      </div>
+
+      <button id="btnScrollFiltrosDer" class="btn-scroll-filtros" aria-label="Desplazar servicios hacia la derecha" type="button" title="Desplazar a la derecha">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+    </div>
+
+    <div class="filtros-separador" aria-hidden="true"></div>
+
+    <div class="filtros-secundarios">
+      <select id="filtroSector" class="filtro-select" aria-label="Filtrar por sector o localidad">
+        <option value="">Toda la ciudad</option>
+      </select>
+
+      <select id="filtroVentana" class="filtro-select" aria-label="Filtrar por ventana de tiempo">
+        <option value="24h" selected>Últimas 24 horas</option>
+        <option value="2h">Últimas 2 horas</option>
+        <option value="6h">Últimas 6 horas</option>
+        <option value="7d">Últimos 7 días</option>
+      </select>
+
+      <select id="filtroOrigen" class="filtro-select" aria-label="Filtrar por tipo de reporte">
+        <option value="" selected>Todos los reportes</option>
+        <option value="falla_imprevista">Fallas ciudadanas</option>
+        <option value="corte_programado">Cortes oficiales</option>
+      </select>
+    </div>
+  </nav>
+
+  <!-- Mapa -->
+  <div id="mapa" class="mapa"></div>
+
+  <!-- Leyenda de intensidad -->
+  <div id="leyenda" class="leyenda" aria-label="Leyenda de intensidad">
+    <span class="leyenda-label">Baja</span>
+    <div class="leyenda-gradiente"></div>
+    <span class="leyenda-label">Alta</span>
+  </div>
+
+  <!-- Grupo de botones flotantes inferiores izquierdos -->
+  <div class="grupo-flotante--izq">
+    <button id="btnConsultar" class="fab fab--secundario" aria-label="Consultar código de incidencia">
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <circle cx="8.5" cy="8.5" r="6" stroke="currentColor" stroke-width="2"/>
+        <line x1="13" y1="13" x2="18" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span class="fab-texto">Consultar</span>
+    </button>
+
+    <button id="btnEstadisticas" class="fab fab--secundario" aria-label="Ver estadísticas">
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <rect x="1" y="12" width="4" height="7" rx="1" fill="currentColor"/>
+        <rect x="8" y="6" width="4" height="13" rx="1" fill="currentColor"/>
+        <rect x="15" y="1" width="4" height="18" rx="1" fill="currentColor"/>
+      </svg>
+      <span class="fab-texto">Estadísticas</span>
+    </button>
+  </div>
+
+  <!-- Botón de centrado en ubicación actual GPS -->
+  <button id="btnMiUbicacion" class="fab fab--secundario fab--ubicacion" aria-label="Centrar en mi ubicación actual" title="Mi ubicación">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="4"/>
+      <line x1="12" y1="2" x2="12" y2="6"/>
+      <line x1="12" y1="18" x2="12" y2="22"/>
+      <line x1="2" y1="12" x2="6" y2="12"/>
+      <line x1="18" y1="12" x2="22" y2="12"/>
+    </svg>
+  </button>
+
+  <!-- FAB Reportar falla -->
+  <button id="btnReportar" class="fab fab--primario" aria-label="Reportar una falla">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+    <span class="fab-texto">Reportar falla</span>
+  </button>
+
+  <!-- Contenedor de modales -->
+  <div id="contenedorModal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-panel" role="dialog" aria-modal="true">
+      <div class="modal-contenido" id="modalContenido"></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="contenedorToast" class="toast-contenedor" aria-live="assertive"></div>
+
+  <!-- Spinner global -->
+  <div id="spinner" class="spinner-overlay" aria-hidden="true">
+    <div class="spinner" role="progressbar" aria-label="Cargando"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

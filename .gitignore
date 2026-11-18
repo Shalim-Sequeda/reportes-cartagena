@@ -1,0 +1,26 @@
+# Dependencias y logs
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Entorno y credenciales
+.env
+.env.local
+.env.*.local
+
+# Archivos de sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Fotos subidas por usuarios en ejecución (mantener carpeta vacía)
+datos/fotos/*
+!datos/fotos/.gitkeep
+
+# Base de datos SQLite y archivos temporales
+datos/*.db
+datos/*.db-wal
+datos/*.db-shm
+!datos/.gitkeep
