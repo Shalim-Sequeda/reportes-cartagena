@@ -1561,7 +1561,7 @@ a {
 
 @media (max-width: 768px) {
   .leaflet-top.leaflet-right .leaflet-control-zoom {
-    margin-top: 136px;
+    margin-top: 200px;
     margin-right: 12px;
   }
 }
