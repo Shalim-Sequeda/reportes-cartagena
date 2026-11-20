@@ -337,13 +337,12 @@ export class VistaMapa {
     // Control de zoom posicionado en la esquina superior derecha (sin interferir con botones inferiores)
     L.control.zoom({ position: 'topright' }).addTo(this.#mapa);
 
-    // OpenStreetMap tiles estándar con optimizacion de renderizado para movil
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 19,
-      updateWhenIdle: true,
-      updateWhenZooming: false,
-      keepBuffer: 3,
+    // Capa cartografica de alta velocidad con CDN perimetral (Esri WorldStreetMap)
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+      attribution: '&copy; Esri &mdash; OpenStreetMap contributors',
+      maxZoom: 18,
+      updateInterval: 100,
+      keepBuffer: 4,
     }).addTo(this.#mapa);
 
     // Restringir a límites de Cartagena
@@ -876,9 +875,10 @@ export class FormularioReporte {
       zoomControl: false,
     });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+      attribution: '&copy; Esri &mdash; OpenStreetMap contributors',
       maxZoom: 18,
+      keepBuffer: 4,
     }).addTo(this.#miniMapa);
 
     const iconoSrv = L.divIcon({
