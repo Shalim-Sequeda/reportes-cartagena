@@ -1,9 +1,10 @@
 // @ts-check
+import { escaparHtml } from './seguridad.js';
 import { ClienteApi } from './ClienteApi.js';
 import { COLORES_SERVICIOS, Graficas, Modal, Toast, generarHtmlPin } from './app.js';
 
 /**
- * Consola de administración y moderación del sistema de reportes ciudadanos de Cartagena.
+ * consola de administración y moderación del sistema de reportes ciudadanos de cartagena.
  */
 export class ConsolaAdmin {
   #api;
@@ -11,12 +12,12 @@ export class ConsolaAdmin {
   #catalogos = { servicios: [], localidades: [], barrios: [], empresas: [] };
   #seccionActiva = 'incidencias';
 
-  // Paginación y estado de incidencias
+  // paginación y estado de incidencias
   #paginaActual = 1;
   #porPagina = 50;
   #incidenciasCache = [];
 
-  // Minimapa del corte
+  // minimapa del corte
   #miniMapaCorte = null;
   #marcadorCorte = null;
   #coordenadasCorte = { lat: 10.4237, lon: -75.5494 };
@@ -33,7 +34,7 @@ export class ConsolaAdmin {
     this.#enlazarFormularioCortes();
     this.#enlazarEstadisticas();
 
-    // Comprobar si ya existe sesión activa
+    // comprobar si ya existe sesión activa
     const tokenGuardado = sessionStorage.getItem('tokenAdmin');
     if (tokenGuardado) {
       try {
@@ -48,7 +49,7 @@ export class ConsolaAdmin {
     }
   }
 
-  // Manejo de sesión y autenticación
+  // manejo de sesión y autenticación
   #mostrarLogin() {
     const pantallaLogin = document.getElementById('pantallaLogin');
     const consolaAdmin = document.getElementById('consolaAdmin');
@@ -113,18 +114,29 @@ export class ConsolaAdmin {
       Toast.mostrar('Sesión cerrada.', 'info');
     });
 
-    // Toggle de menú móvil
+    // toggle de menú móvil
     const btnMenu = document.getElementById('btnMenuAdmin');
     const sidebar = document.querySelector('.admin-sidebar');
     btnMenu?.addEventListener('click', () => {
       sidebar?.classList.toggle('abierto');
+      btnMenu.setAttribute('aria-expanded', String(sidebar?.classList.contains('abierto')));
     });
   }
 
   async #cargarCatalogos() {
     this.#catalogos = await this.#api.obtenerCatalogos();
+    const sectores = document.getElementById('corteSector');
+    sectores.replaceChildren(new Option('Selecciona un barrio o marca el mapa', ''));
+    for (const barrio of this.#catalogos.barrios || []) sectores.add(new Option(barrio.nombre, String(barrio.id)));
+    sectores.onchange = () => {
+      const barrio = this.#catalogos.barrios.find(b => String(b.id) === sectores.value);
+      if (!barrio || !Number.isFinite(Number(barrio.latitud)) || !Number.isFinite(Number(barrio.longitud))) return;
+      this.#coordenadasCorte = { lat: Number(barrio.latitud), lon: Number(barrio.longitud) };
+      this.#marcadorCorte?.setLatLng([this.#coordenadasCorte.lat, this.#coordenadasCorte.lon]);
+      this.#miniMapaCorte?.panTo([this.#coordenadasCorte.lat, this.#coordenadasCorte.lon]);
+    };
 
-    // Llenar selector de servicios en filtro admin
+    // llenar selector de servicios en filtro admin
     const selServicio = document.getElementById('adminFiltroServicio');
     if (selServicio) {
       selServicio.innerHTML = '<option value="">Todos los servicios</option>';
@@ -136,7 +148,7 @@ export class ConsolaAdmin {
       });
     }
 
-    // Llenar selector de servicios en formulario de corte
+    // llenar selector de servicios en formulario de corte
     const selCorteServicio = /** @type {HTMLSelectElement} */ (document.getElementById('corteServicio'));
     if (selCorteServicio) {
       selCorteServicio.innerHTML = '<option value="">Seleccione servicio...</option>';
@@ -171,18 +183,20 @@ export class ConsolaAdmin {
     });
   }
 
-  // Navegación de pestañas
+  // navegación de pestañas
   #enlazarNavegacion() {
     const enlaces = document.querySelectorAll('.sidebar-enlace');
     enlaces.forEach((enlace) => {
       enlace.addEventListener('click', () => {
-        enlaces.forEach((e) => e.classList.remove('active'));
+        enlaces.forEach((e) => { e.classList.remove('active'); e.removeAttribute('aria-current'); });
+        enlace.setAttribute('aria-current', 'page');
+        document.getElementById('btnMenuAdmin')?.setAttribute('aria-expanded', 'false');
         enlace.classList.add('active');
 
         const seccion = enlace.getAttribute('data-seccion') || 'incidencias';
         this.#cargarSeccion(seccion);
 
-        // En móvil cerrar el sidebar al seleccionar
+        // en móvil cerrar el sidebar al seleccionar
         document.querySelector('.admin-sidebar')?.classList.remove('abierto');
       });
     });
@@ -211,7 +225,7 @@ export class ConsolaAdmin {
     }
   }
 
-  // Sección: incidencias y moderación
+  // sección: incidencias y moderación
   #enlazarFiltrosIncidencias() {
     document.getElementById('adminBtnFiltrar')?.addEventListener('click', () => {
       this.#paginaActual = 1;
@@ -224,7 +238,9 @@ export class ConsolaAdmin {
     const estado = /** @type {HTMLSelectElement} */ (document.getElementById('adminFiltroEstado'))?.value;
 
     try {
-      const filtros = { servicio, estado };
+      const desde = document.getElementById('adminFiltroDesde').value;
+      const hasta = document.getElementById('adminFiltroHasta').value;
+      const filtros = { servicio, estado, desde, hasta };
       this.#incidenciasCache = await this.#api.obtenerIncidenciasAdmin(filtros);
       this.#renderizarTablaIncidencias();
     } catch (err) {
@@ -270,7 +286,7 @@ export class ConsolaAdmin {
         <td>
           <span class="badge-estado badge-estado--${inc.estado.toLowerCase()}">${inc.estado}</span>
         </td>
-        <td>${inc.barrioNombre || inc.barrio || 'Cartagena'}</td>
+        <td>${escaparHtml(inc.barrioNombre || inc.barrio || 'Cartagena')}</td>
         <td>${fechaStr}</td>
         <td>
           <div style="display:flex;gap:6px;">
@@ -278,7 +294,7 @@ export class ConsolaAdmin {
             ${
               inc.estado !== 'Archivado'
                 ? `
-              <button class="btn btn--secundario btn--sm btn-depurar" data-id="${inc.id}">Archivar</button>
+              <button class="btn btn--secundario btn--sm btn-depurar" data-id="${inc.id}">Depurar</button>
               <button class="btn btn--secundario btn--sm btn-fusionar" data-id="${inc.id}">Fusionar</button>`
                 : ''
             }
@@ -288,7 +304,7 @@ export class ConsolaAdmin {
 
       tbody.appendChild(tr);
 
-      // Fila expansible para detalle
+      // fila expansible para detalle
       tr.querySelector('.btn-ver-detalle')?.addEventListener('click', () => {
         this.#mostrarDetalleIncidenciaModal(inc);
       });
@@ -302,7 +318,7 @@ export class ConsolaAdmin {
       });
     });
 
-    // Paginador
+    // paginador
     const totalPaginas = Math.ceil(this.#incidenciasCache.length / this.#porPagina);
     if (paginacion) {
       paginacion.innerHTML = `
@@ -335,7 +351,7 @@ export class ConsolaAdmin {
         <button class="modal-cerrar" data-accion="cerrar-modal">&times;</button>
       </div>
       <div class="modal-cuerpo">
-        <p style="font-size:15px;line-height:1.5;">${inc.descripcion || 'Sin descripción'}</p>
+        <p style="font-size:15px;line-height:1.5;">${escaparHtml(inc.descripcion || 'Sin descripción')}</p>
         <div class="ficha-meta" style="margin-top:12px;">
           <div class="ficha-meta-item"><span>Estado</span><strong>${inc.estado}</strong></div>
           <div class="ficha-meta-item"><span>Origen</span><strong>${inc.origen}</strong></div>
@@ -362,7 +378,7 @@ export class ConsolaAdmin {
         <div class="campo">
           <label for="motivoArchivar" class="campo-label">Motivo</label>
           <select id="motivoArchivar" class="campo-input">
-            <option value="Resuelto por cuadrilla técnica">Resuelto por cuadrilla técnica</option>
+            <option value="">Selecciona un motivo obligatorio</option>
             <option value="Reporte duplicado depurado">Reporte duplicado depurado</option>
             <option value="Información falsa o inválida">Información falsa o inválida</option>
             <option value="Superado por corte programado">Superado por corte programado</option>
@@ -380,6 +396,7 @@ export class ConsolaAdmin {
     document.getElementById('btnConfirmarArchivar')?.addEventListener('click', async () => {
       const motivo = /** @type {HTMLSelectElement} */ (document.getElementById('motivoArchivar'))?.value;
       try {
+        if (!motivo) { Toast.mostrar('Selecciona el motivo de depuración.', 'error'); return; }
         await this.#api.moderarIncidencia(id, 'archivar', { motivo });
         this.#modal.cerrar();
         Toast.mostrar('Incidencia archivada exitosamente.', 'exito');
@@ -429,9 +446,22 @@ export class ConsolaAdmin {
     });
   }
 
-  // Sección: cortes programados
+  // sección: cortes programados
   #enlazarFormularioCortes() {
     const form = /** @type {HTMLFormElement} */ (document.getElementById('formCorte'));
+    const inicio = document.getElementById('corteFechaInicio');
+    const fin = document.getElementById('corteFechaFin');
+    const error = document.getElementById('corteError');
+    const validarFechas = () => {
+      const mensaje = inicio.value && fin.value && new Date(fin.value) <= new Date(inicio.value)
+        ? 'La fecha de fin debe ser posterior al inicio.' : '';
+      fin.setCustomValidity(mensaje);
+      error.textContent = mensaje;
+      error.hidden = !mensaje;
+      if (inicio.value) fin.min = inicio.value;
+    };
+    inicio.addEventListener('input', validarFechas);
+    fin.addEventListener('input', validarFechas);
     form?.addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -446,8 +476,8 @@ export class ConsolaAdmin {
         await this.#api.registrarCorte({
           servicio,
           empresa,
-          fechaInicio,
-          fechaFin,
+          fechaInicio: new Date(fechaInicio).toISOString(),
+          fechaFin: new Date(fechaFin).toISOString(),
           motivo,
           descripcion,
           latitud: this.#coordenadasCorte.lat,
@@ -478,8 +508,8 @@ export class ConsolaAdmin {
       zoomControl: false,
     });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri — Sources: Esri, HERE, Garmin, USGS, Intermap, INCREMENT P, NRCan, METI, NLS, NMA, GEBCO, NOAA, GIS User Community',
       maxZoom: 18,
     }).addTo(this.#miniMapaCorte);
 
@@ -530,7 +560,7 @@ export class ConsolaAdmin {
             </span>
           </div>
           <strong style="font-size:14px;">${corte.codigo || `Corte #${corte.id}`}</strong>
-          <p style="font-size:13px;color:#374151;">${corte.descripcion}</p>
+          <p style="font-size:13px;color:#374151;">${escaparHtml(corte.descripcion)}</p>
           <div style="font-size:12px;color:#6B7280;">
             <div><strong>Inicio:</strong> ${corte.fechaInicio ? new Date(corte.fechaInicio).toLocaleString('es-CO') : '-'}</div>
             <div><strong>Fin:</strong> ${corte.fechaFin ? new Date(corte.fechaFin).toLocaleString('es-CO') : '-'}</div>
@@ -544,7 +574,7 @@ export class ConsolaAdmin {
     }
   }
 
-  // Sección: estadísticas y exportación CSV
+  // sección: estadísticas y exportación csv
   #enlazarEstadisticas() {
     document.getElementById('btnCalcularEstad')?.addEventListener('click', () => {
       this.#cargarEstadisticas();
@@ -580,8 +610,10 @@ export class ConsolaAdmin {
 
     try {
       const stats = await this.#api.obtenerEstadisticas(desde, hasta, 'json');
+      stats.totalActivas = stats.porEstado?.find(e => e.estado === 'Reportado')?.total || 0;
+      stats.totalSolucionadas = stats.porEstado?.find(e => e.estado === 'Solucionado')?.total || 0;
       contenedor.innerHTML = `
-        <div class="metricas-grid">
+        <div class="metricas-grid"><div class="tarjeta-metrica"><span class="metrica-numero">${stats.totalConfirmaciones || 0}</span><span class="metrica-etiqueta">Confirmaciones</span></div>
           <div class="tarjeta-metrica">
             <span class="metrica-numero">${stats.totalIncidencias || stats.total || 0}</span>
             <span class="metrica-etiqueta">Total reportes</span>
@@ -604,7 +636,7 @@ export class ConsolaAdmin {
         </div>
       `;
 
-      // Graficar barras de servicios
+      // graficar barras de servicios
       const contGrafica = document.getElementById('graficaAdminServicios');
       if (contGrafica) {
         const datos = (stats.porServicio || []).map((s) => ({
@@ -619,7 +651,7 @@ export class ConsolaAdmin {
     }
   }
 
-  // Sección: bitácora de auditoría
+  // sección: bitácora de auditoría
   async #cargarBitacora() {
     const tbody = document.getElementById('tbodyBitacora');
     if (!tbody) return;
@@ -641,9 +673,9 @@ export class ConsolaAdmin {
         tr.innerHTML = `
           <td style="white-space:nowrap;font-size:12px;">${fechaStr}</td>
           <td><strong>${reg.usuario || 'sistema'}</strong></td>
-          <td>${reg.accion}</td>
+          <td>${escaparHtml(reg.accion)}</td>
           <td><span style="font-family:var(--fuente-mono);">${reg.entidad || '-'} #${reg.entidadId || ''}</span></td>
-          <td style="font-size:13px;color:#374151;">${detalle}</td>
+          <td style="font-size:13px;color:#374151;">${escaparHtml(detalle)}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -653,7 +685,7 @@ export class ConsolaAdmin {
   }
 }
 
-// Inicialización consola admin
+// inicialización consola admin
 document.addEventListener('DOMContentLoaded', () => {
   const admin = new ConsolaAdmin();
   admin.iniciar();

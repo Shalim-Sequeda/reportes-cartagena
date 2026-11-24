@@ -1,8 +1,9 @@
 // @ts-check
 import { ClienteApi } from './ClienteApi.js';
+import { escaparHtml } from './seguridad.js';
 
 /**
- * Paleta fija de servicios y estados de Cartagena.
+ * paleta fija de servicios y estados de cartagena.
  */
 export const COLORES_SERVICIOS = {
   1: { nombre: 'Energía', color: '#D97706', id: 1 },
@@ -13,7 +14,7 @@ export const COLORES_SERVICIOS = {
 };
 
 /**
- * Iconos vectoriales limpios para cada servicio publico y cortes programados.
+ * iconos vectoriales limpios para cada servicio publico y cortes programados.
  */
 export const ICONOS_SERVICIOS_SVG = {
   1: '<polygon points="13 2 4 14 11 14 9 22 20 10 13 10 15 2" fill="currentColor"/>',
@@ -25,7 +26,7 @@ export const ICONOS_SERVICIOS_SVG = {
 };
 
 /**
- * Genera el marcado html del pin personalizado con su icono vectorial.
+ * genera el marcado html del pin personalizado con su icono vectorial.
  * @param {number|string} servicioId
  * @param {boolean} [esCorte=false]
  * @returns {string}
@@ -52,11 +53,11 @@ export function generarHtmlPin(servicioId, esCorte = false) {
 }
 
 /**
- * Notificador tipo toast accesible y ligero.
+ * notificador tipo toast accesible y ligero.
  */
 export class Toast {
   /**
-   * Muestra un mensaje emergente.
+   * muestra un mensaje emergente.
    * @param {string} mensaje
    * @param {'exito'|'error'|'info'} [tipo='info']
    * @param {number} [duracionMs=4000]
@@ -72,7 +73,7 @@ export class Toast {
 
     contenedor.appendChild(toast);
 
-    // Animación de entrada
+    // animación de entrada
     requestAnimationFrame(() => {
       toast.classList.add('visible');
     });
@@ -85,7 +86,7 @@ export class Toast {
 }
 
 /**
- * Controlador de overlay de modal accesible.
+ * controlador de overlay de modal accesible.
  */
 export class Modal {
   #contenedor;
@@ -101,7 +102,7 @@ export class Modal {
     this.#cuerpo = document.getElementById(idCuerpo);
 
     if (this.#contenedor) {
-      // Cerrar al hacer clic en el backdrop
+      // cerrar al hacer clic en el backdrop
       this.#contenedor.addEventListener('click', (e) => {
         if (e.target === this.#contenedor) {
           this.cerrar();
@@ -109,7 +110,7 @@ export class Modal {
       });
     }
 
-    // Cerrar con escape
+    // cerrar con escape
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && this.estaAbierto()) {
         this.cerrar();
@@ -122,7 +123,7 @@ export class Modal {
   }
 
   /**
-   * Abre el modal e inserta el elemento HTML.
+   * abre el modal e inserta el elemento html.
    * @param {HTMLElement|string} contenido
    * @param {Function} [alCerrar]
    */
@@ -137,7 +138,7 @@ export class Modal {
       this.#cuerpo.appendChild(contenido);
     }
 
-    // Configurar botones de cierre internos
+    // configurar botones de cierre internos
     this.#cuerpo.querySelectorAll('[data-accion="cerrar-modal"]').forEach((btn) => {
       btn.addEventListener('click', () => this.cerrar());
     });
@@ -145,12 +146,12 @@ export class Modal {
     this.#contenedor.setAttribute('aria-hidden', 'false');
     this.#contenedor.classList.add('activo');
 
-    // Bloquear scroll del fondo
+    // bloquear scroll del fondo
     document.body.style.overflow = 'hidden';
   }
 
   /**
-   * Cierra el modal animado.
+   * cierra el modal animado.
    */
   cerrar() {
     if (!this.#contenedor) return;
@@ -170,11 +171,11 @@ export class Modal {
 }
 
 /**
- * Generador y renderizador de gráficas en SVG puro y accesible.
+ * generador y renderizador de gráficas en svg puro y accesible.
  */
 export class Graficas {
   /**
-   * Renderiza una gráfica de línea con relleno de área en SVG.
+   * renderiza una gráfica de línea con relleno de área en svg.
    * @param {HTMLElement} contenedor
    * @param {Array<{ fecha: string|number, valor: number }>} datos
    * @param {object} [opciones={}]
@@ -202,7 +203,7 @@ export class Graficas {
     const escalaX = (i) => padding.left + (i / Math.max(datos.length - 1, 1)) * wUtil;
     const escalaY = (v) => padding.top + hUtil - ((Number(v) - minVal) / Math.max(maxVal - minVal, 1)) * hUtil;
 
-    // Puntos para polilínea y área
+    // puntos para polilínea y área
     const puntosLinea = datos.map((d, i) => `${escalaX(i)},${escalaY(d.valor ?? d.eventos ?? 0)}`).join(' ');
     const primerX = escalaX(0);
     const ultimoX = escalaX(datos.length - 1);
@@ -214,15 +215,15 @@ export class Graficas {
 
     let svg = `
       <svg class="svg-grafica" viewBox="0 0 ${ancho} ${alto}" width="100%" height="${alto}" role="img" aria-label="Gráfica de incidencias en el tiempo">
-        <!-- Ejes y rejilla -->
+        <!-- ejes y rejilla -->
         <line x1="${padding.left}" y1="${baseY}" x2="${ancho - padding.right}" y2="${baseY}" stroke="#E5E7EB" stroke-width="1" />
         <line x1="${padding.left}" y1="${padding.top}" x2="${ancho - padding.right}" y2="${padding.top}" stroke="#F3F4F6" stroke-dasharray="3 3" />
         
-        <!-- Área y línea -->
+        <!-- área y línea -->
         <polygon points="${puntosArea}" fill="${colorArea}" />
         <polyline points="${puntosLinea}" fill="none" stroke="${colorLinea}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
         
-        <!-- Puntos -->
+        <!-- puntos -->
         ${datos
           .map(
             (d, i) => `
@@ -232,7 +233,7 @@ export class Graficas {
           )
           .join('')}
 
-        <!-- Etiquetas Y -->
+        <!-- etiquetas y -->
         <text x="${padding.left - 6}" y="${baseY + 4}" font-size="10" fill="#9CA3AF" text-anchor="end">${minVal}</text>
         <text x="${padding.left - 6}" y="${padding.top + 4}" font-size="10" fill="#9CA3AF" text-anchor="end">${maxVal}</text>
       </svg>
@@ -242,7 +243,7 @@ export class Graficas {
   }
 
   /**
-   * Renderiza un gráfico de barras horizontales en SVG.
+   * renderiza un gráfico de barras horizontales en svg.
    * @param {HTMLElement} contenedor
    * @param {Array<{ etiqueta: string, valor: number, color?: string }>} datos
    * @param {object} [opciones={}]
@@ -291,7 +292,7 @@ export class Graficas {
 }
 
 /**
- * Controlador de mapa Leaflet interactivo con capa de calor.
+ * controlador de mapa leaflet interactivo con capa de calor.
  */
 export class VistaMapa {
   #api;
@@ -301,7 +302,7 @@ export class VistaMapa {
   #capaMarcadores = null;
   #intervaloRefresco = null;
 
-  // Límites geográficos del distrito de Cartagena
+  // límites geográficos del distrito de cartagena
   static LIMITES = {
     sur: 10.20,
     norte: 10.60,
@@ -323,7 +324,7 @@ export class VistaMapa {
     const contenedor = document.getElementById('mapa');
     if (!contenedor || typeof L === 'undefined') return;
 
-    // Centrado en Cartagena de indias (10.4, -75.5) con aceleracion canvas para moviles
+    // centrado en cartagena de indias (10.4, -75.5) con aceleracion canvas para moviles
     this.#mapa = L.map(contenedor, {
       center: [10.4, -75.5],
       zoom: 13,
@@ -334,18 +335,18 @@ export class VistaMapa {
       fadeAnimation: false,
     });
 
-    // Control de zoom posicionado en la esquina superior derecha (sin interferir con botones inferiores)
+    // control de zoom posicionado en la esquina superior derecha (sin interferir con botones inferiores)
     L.control.zoom({ position: 'topright' }).addTo(this.#mapa);
 
-    // Capa cartografica de alta velocidad con CDN perimetral (Esri WorldStreetMap)
+    // capa cartografica de alta velocidad con cdn perimetral (esri worldstreetmap)
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-      attribution: '&copy; Esri &mdash; OpenStreetMap contributors',
+      attribution: 'Tiles &copy; Esri — Sources: Esri, HERE, Garmin, USGS, Intermap, INCREMENT P, NRCan, METI, NLS, NMA, GEBCO, NOAA, GIS User Community',
       maxZoom: 18,
       updateInterval: 100,
       keepBuffer: 4,
     }).addTo(this.#mapa);
 
-    // Restringir a límites de Cartagena
+    // restringir a límites de cartagena
     const bounds = L.latLngBounds(
       [VistaMapa.LIMITES.sur, VistaMapa.LIMITES.oeste],
       [VistaMapa.LIMITES.norte, VistaMapa.LIMITES.este]
@@ -354,12 +355,12 @@ export class VistaMapa {
 
     this.#capaMarcadores = L.layerGroup().addTo(this.#mapa);
 
-    // Refresco automático cada 10s para actualización colaborativa en clase
+    // refresco automático cada 10s para actualización colaborativa en clase
     this.#intervaloRefresco = setInterval(() => {
       this.cargar(this.#filtrosActuales);
     }, 10000);
 
-    // Búsqueda automática de ubicación gps del usuario al iniciar la aplicación
+    // búsqueda automática de ubicación gps del usuario al iniciar la aplicación
     this.geolocalizarUsuario(true);
   }
 
@@ -376,7 +377,7 @@ export class VistaMapa {
   #ubicacionUsuario = null;
 
   /**
-   * Obtiene la ubicación gps del usuario, centra el mapa y dibuja el punto azul pulsante.
+   * obtiene la ubicación gps del usuario, centra el mapa y dibuja el punto azul pulsante.
    * @param {boolean} [centrar=true]
    * @returns {Promise<{ lat: number, lon: number, precision: number }|null>}
    */
@@ -396,7 +397,7 @@ export class VistaMapa {
           this.#ubicacionUsuario = { lat, lon, precision };
 
           if (this.#mapa) {
-            // Eliminar marcadores previos de usuario si existen
+            // eliminar marcadores previos de usuario si existen
             if (this.#marcadorUsuario) {
               this.#mapa.removeLayer(this.#marcadorUsuario);
             }
@@ -404,7 +405,7 @@ export class VistaMapa {
               this.#mapa.removeLayer(this.#circuloPrecisionUsuario);
             }
 
-            // Dibujar círculo de precisión
+            // dibujar círculo de precisión
             this.#circuloPrecisionUsuario = L.circle([lat, lon], {
               radius: Math.min(precision, 500),
               color: '#2563EB',
@@ -413,7 +414,7 @@ export class VistaMapa {
               fillOpacity: 0.12,
             }).addTo(this.#mapa);
 
-            // Dibujar punto azul pulsante estilo Google Maps
+            // dibujar punto azul pulsante estilo google maps
             const iconoUsuario = L.divIcon({
               className: 'leaflet-icono-usuario',
               html: `
@@ -431,7 +432,7 @@ export class VistaMapa {
               zIndexOffset: 1000,
             }).addTo(this.#mapa);
 
-            // Centrar el mapa con animación suave si se solicita
+            // centrar el mapa con animación suave si se solicita
             if (centrar) {
               if (
                 lat >= VistaMapa.LIMITES.sur &&
@@ -439,7 +440,7 @@ export class VistaMapa {
                 lon >= VistaMapa.LIMITES.oeste &&
                 lon <= VistaMapa.LIMITES.este
               ) {
-                this.#mapa.flyTo([lat, lon], 16, { duration: 1.2 });
+                this.#mapa.panTo([lat, lon], { animate: !matchMedia('(prefers-reduced-motion: reduce)').matches, duration: 0.5 });
               } else {
                 Toast.mostrar('Tu ubicación gps está fuera del distrito de Cartagena.', 'info');
               }
@@ -460,7 +461,7 @@ export class VistaMapa {
   #filtrosActuales = {};
 
   /**
-   * Consulta incidencias con filtros actuales y redibuja capas.
+   * consulta incidencias con filtros actuales y redibuja capas.
    * @param {object} [filtros=null]
    */
   async cargar(filtros = null) {
@@ -479,7 +480,7 @@ export class VistaMapa {
   }
 
   /**
-   * Dibuja o actualiza la capa de calor Leaflet con gradiente cívico: amarillo -> naranja -> rojo.
+   * dibuja o actualiza la capa de calor leaflet con gradiente cívico: amarillo -> naranja -> rojo.
    * @param {any[]} datos
    * @param {any[]|null} [capaCalorServidor=null]
    */
@@ -529,7 +530,7 @@ export class VistaMapa {
   }
 
   /**
-   * Dibuja marcadores individuales discretos para interacción táctil directa.
+   * dibuja marcadores individuales discretos para interacción táctil directa.
    * @param {any[]} datos
    */
   dibujarMarcadores(datos) {
@@ -554,7 +555,7 @@ export class VistaMapa {
 
       const marcador = L.marker([inc.latitud, inc.longitud], { icon: icono });
 
-      // Click o toque
+      // click o toque
       marcador.on('click', () => {
         if (typeof this.#alSeleccionarIncidencia === 'function') {
           this.#alSeleccionarIncidencia(inc.id || inc.codigo);
@@ -567,7 +568,7 @@ export class VistaMapa {
 }
 
 /**
- * Asistente modal en 3 pasos para el registro ciudadano de fallas.
+ * asistente modal en 3 pasos para el registro ciudadano de fallas.
  */
 export class FormularioReporte {
   #api;
@@ -600,7 +601,7 @@ export class FormularioReporte {
   }
 
   /**
-   * Abre el asistente en el paso 1 prellenando la ubicación si está disponible.
+   * abre el asistente en el paso 1 prellenando la ubicación si está disponible.
    * @param {{ lat?: number, lon?: number }|null} [ubicacionPredeterminada=null]
    */
   iniciar(ubicacionPredeterminada = null) {
@@ -635,14 +636,14 @@ export class FormularioReporte {
       </div>
 
       <div class="modal-cuerpo">
-        <!-- Indicador de 3 pasos -->
+        <!-- indicador de 3 pasos -->
         <div class="indicador-pasos" role="progressbar" aria-valuenow="1" aria-valuemin="1" aria-valuemax="3">
-          <div class="paso-punto activo" data-paso="1"></div>
-          <div class="paso-punto" data-paso="2"></div>
-          <div class="paso-punto" data-paso="3"></div>
+          <div class="paso-punto activo" data-paso="1">1 · Servicio</div>
+          <div class="paso-punto" data-paso="2">2 · Descripción y foto</div>
+          <div class="paso-punto" data-paso="3">3 · Ubicación</div>
         </div>
 
-        <!-- Paso 1: selección de servicio -->
+        <!-- paso 1: selección de servicio -->
 
         <div class="paso-contenedor activo" id="paso1">
           <p class="campo-label">¿Qué servicio presenta la falla?</p>
@@ -663,7 +664,7 @@ export class FormularioReporte {
           </div>
         </div>
 
-        <!-- Paso 2: descripción y foto -->
+        <!-- paso 2: descripción y foto -->
 
         <div class="paso-contenedor" id="paso2">
           <div class="campo">
@@ -686,7 +687,7 @@ export class FormularioReporte {
           </div>
         </div>
 
-        <!-- Paso 3: ubicación y minimapa -->
+        <!-- paso 3: ubicación y minimapa -->
 
         <div class="paso-contenedor" id="paso3">
           <div class="campo">
@@ -715,7 +716,7 @@ export class FormularioReporte {
     const contenedor = document.getElementById('contenedorModal');
     if (!contenedor) return;
 
-    // Paso 1: servicios
+    // paso 1: servicios
     const btnsServicio = contenedor.querySelectorAll('.btn-servicio');
     btnsServicio.forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -726,7 +727,7 @@ export class FormularioReporte {
       });
     });
 
-    // Paso 2: textarea y contador
+    // paso 2: textarea y contador
     const txtDesc = /** @type {HTMLTextAreaElement} */ (contenedor.querySelector('#descReporte'));
     const contador = contenedor.querySelector('#contadorChar');
     if (txtDesc && contador) {
@@ -738,7 +739,7 @@ export class FormularioReporte {
       });
     }
 
-    // Paso 2: foto y compresión en cliente
+    // paso 2: foto y compresión en cliente
     const inputFoto = /** @type {HTMLInputElement} */ (contenedor.querySelector('#inputFoto'));
     const previewCont = contenedor.querySelector('#previewFotoContenedor');
     const imgPreview = /** @type {HTMLImageElement} */ (contenedor.querySelector('#imgPreview'));
@@ -774,13 +775,13 @@ export class FormularioReporte {
       });
     }
 
-    // Paso 3: GPS
+    // paso 3: gps
     const btnGps = contenedor.querySelector('#btnGps');
     if (btnGps) {
       btnGps.addEventListener('click', () => this.#obtenerUbicacionGps());
     }
 
-    // Navegación siguiente / atrás
+    // navegación siguiente / atrás
     const btnSiguiente = contenedor.querySelector('#btnSiguiente');
     const btnAtras = contenedor.querySelector('#btnAtras');
 
@@ -805,7 +806,8 @@ export class FormularioReporte {
     const contenedor = document.getElementById('contenedorModal');
     if (!contenedor) return;
 
-    // Actualizar puntos de progreso
+    // actualizar puntos de progreso
+    contenedor.querySelector('[role=progressbar]')?.setAttribute('aria-valuenow', String(this.#pasoActual));
     const puntos = contenedor.querySelectorAll('.paso-punto');
     puntos.forEach((p, idx) => {
       const pasoNum = idx + 1;
@@ -813,7 +815,7 @@ export class FormularioReporte {
       p.classList.toggle('completado', pasoNum < this.#pasoActual);
     });
 
-    // Mostrar sección correspondiente
+    // mostrar sección correspondiente
     for (let i = 1; i <= 3; i++) {
       const seccion = contenedor.querySelector(`#paso${i}`);
       if (seccion) {
@@ -832,7 +834,7 @@ export class FormularioReporte {
       btnSiguiente.textContent = this.#pasoActual === 3 ? 'Enviar reporte' : 'Siguiente';
     }
 
-    // Inicializar mini-mapa al llegar al paso 3
+    // inicializar mini-mapa al llegar al paso 3
     if (this.#pasoActual === 3) {
       setTimeout(() => this.#inicializarMiniMapa(), 100);
     }
@@ -876,7 +878,7 @@ export class FormularioReporte {
     });
 
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-      attribution: '&copy; Esri &mdash; OpenStreetMap contributors',
+      attribution: 'Tiles &copy; Esri — Sources: Esri, HERE, Garmin, USGS, Intermap, INCREMENT P, NRCan, METI, NLS, NMA, GEBCO, NOAA, GIS User Community',
       maxZoom: 18,
       keepBuffer: 4,
     }).addTo(this.#miniMapa);
@@ -925,7 +927,7 @@ export class FormularioReporte {
   }
 
   /**
-   * Actualiza las coordenadas de forma transparente si el GPS resuelve en segundo plano.
+   * actualiza las coordenadas de forma transparente si el gps resuelve en segundo plano.
    * @param {number} lat
    * @param {number} lon
    */
@@ -933,7 +935,7 @@ export class FormularioReporte {
     if (this.#datos.origenUbicacion === 'manual' && this.#datos.latitud === 10.4237) {
       this.#actualizarCoordenadas(lat, lon, 'gps');
       if (this.#miniMapa && this.#marcadorUbicacion) {
-        this.#miniMapa.setView([lat, lon], 16);
+        this.#miniMapa.panTo([lat, lon], { animate: !matchMedia('(prefers-reduced-motion: reduce)').matches, duration: 0.5 });
         this.#marcadorUbicacion.setLatLng([lat, lon]);
       }
     }
@@ -952,7 +954,7 @@ export class FormularioReporte {
         const lat = pos.coords.latitude;
         const lon = pos.coords.longitude;
 
-        // Comprobar si está en Cartagena
+        // comprobar si está en cartagena
         if (
           lat < VistaMapa.LIMITES.sur ||
           lat > VistaMapa.LIMITES.norte ||
@@ -964,7 +966,7 @@ export class FormularioReporte {
         }
 
         if (this.#miniMapa && this.#marcadorUbicacion) {
-          this.#miniMapa.setView([lat, lon], 16);
+          this.#miniMapa.panTo([lat, lon], { animate: !matchMedia('(prefers-reduced-motion: reduce)').matches, duration: 0.5 });
           this.#marcadorUbicacion.setLatLng([lat, lon]);
         }
         this.#actualizarCoordenadas(lat, lon, 'gps');
@@ -978,7 +980,7 @@ export class FormularioReporte {
   }
 
   /**
-   * Comprime una foto en cliente a un ancho máx de 1280px y calidad 0.75 JPEG.
+   * comprime una foto en cliente a un ancho máx de 960px y calidad 0.70 jpeg.
    * @param {File} file
    * @returns {Promise<string>}
    */
@@ -993,7 +995,7 @@ export class FormularioReporte {
           const canvas = document.createElement('canvas');
           let w = img.width;
           let h = img.height;
-          const maxDim = 1280;
+          const maxDim = 960;
 
           if (w > maxDim || h > maxDim) {
             if (w > h) {
@@ -1011,7 +1013,7 @@ export class FormularioReporte {
           if (!ctx) return reject(new Error('Canvas no disponible'));
           ctx.drawImage(img, 0, 0, w, h);
 
-          const base64 = canvas.toDataURL('image/jpeg', 0.75);
+          const base64 = canvas.toDataURL('image/jpeg', 0.70);
           resolve(base64);
         };
         img.src = /** @type {string} */ (e.target?.result);
@@ -1033,7 +1035,7 @@ export class FormularioReporte {
       }
     } catch (err) {
       if (err.status === 409 || err.codigo === 409) {
-        // Conflicto de duplicado en un radio de 120m
+        // conflicto de duplicado en un radio de 120m
         this.#mostrarDialogoDuplicado(err.detalles?.duplicados || []);
       } else {
         Toast.mostrar(err.message || 'Error al enviar reporte.', 'error');
@@ -1043,7 +1045,7 @@ export class FormularioReporte {
   }
 
   /**
-   * Muestra diálogo de confirmación cuando ya existe un reporte cercano.
+   * muestra diálogo de confirmación cuando ya existe un reporte cercano.
    * @param {any[]} duplicados
    */
   #mostrarDialogoDuplicado(duplicados) {
@@ -1112,7 +1114,7 @@ export class FormularioReporte {
 }
 
 /**
- * Ficha de detalle de incidencia con confirmaciones y votación comunitaria de solución.
+ * ficha de detalle de incidencia con confirmaciones y votación comunitaria de solución.
  */
 export class FichaIncidencia {
   #api;
@@ -1131,7 +1133,7 @@ export class FichaIncidencia {
   }
 
   /**
-   * Carga y muestra los detalles de una incidencia.
+   * carga y muestra los detalles de una incidencia.
    * @param {number|string} idOcodigo
    */
   async mostrar(idOcodigo) {
@@ -1175,7 +1177,7 @@ export class FichaIncidencia {
           <span class="ficha-codigo">${inc.codigo || `ID #${inc.id}`}</span>
         </div>
 
-        <p class="ficha-descripcion">${inc.descripcion || 'Sin descripción detallada.'}</p>
+        <p class="ficha-descripcion">${escaparHtml(inc.descripcion || 'Sin descripción detallada.')}</p>
 
         ${inc.foto ? `<img src="${inc.foto}" alt="Foto de la incidencia" class="ficha-foto">` : ''}
 
@@ -1198,7 +1200,7 @@ export class FichaIncidencia {
           </div>
         </div>
 
-        <!-- Botón de confirmación -->
+        <!-- botón de confirmación -->
 
         ${
           inc.origen !== 'corte_programado' && inc.estado === 'Reportado'
@@ -1210,7 +1212,7 @@ export class FichaIncidencia {
             : ''
         }
 
-        <!-- Sección de votación comunitaria de solución -->
+        <!-- sección de votación comunitaria de solución -->
 
         ${
           inc.origen !== 'corte_programado' && inc.estado !== 'Archivado'
@@ -1232,7 +1234,7 @@ export class FichaIncidencia {
             : ''
         }
 
-        <!-- Historial / timeline -->
+        <!-- historial / timeline -->
 
         ${
           inc.historial && inc.historial.length > 0
@@ -1258,7 +1260,7 @@ export class FichaIncidencia {
 
     this.#modal.abrir(contenedor);
 
-    // Función auxiliar para geolocalizar al ciudadano al interactuar
+    // función auxiliar para geolocalizar al ciudadano al interactuar
     const obtenerUbicacionActual = () =>
       new Promise((resolve) => {
         if (!navigator.geolocation) return resolve(null);
@@ -1269,7 +1271,7 @@ export class FichaIncidencia {
         );
       });
 
-    // Eventos de acciones
+    // eventos de acciones
     document.getElementById('btnConfirmarFalla')?.addEventListener('click', async () => {
       try {
         const coords = await obtenerUbicacionActual();
@@ -1310,7 +1312,7 @@ export class FichaIncidencia {
 }
 
 /**
- * Modal y visor de estadísticas públicas con nivel de alerta.
+ * modal y visor de estadísticas públicas con nivel de alerta.
  */
 export class VistaEstadisticas {
   #api;
@@ -1335,20 +1337,20 @@ export class VistaEstadisticas {
         <button class="modal-cerrar" data-accion="cerrar-modal">&times;</button>
       </div>
       <div class="modal-cuerpo">
-        <!-- Selector de ventana temporal -->
+        <!-- selector de ventana temporal -->
         <div class="filtros-scroll" style="margin-bottom:8px;">
           <button class="filtro-chip ${this.#ventana === '24h' ? 'active' : ''}" data-estad-vent="24h">Últimas 24h</button>
           <button class="filtro-chip ${this.#ventana === '7d' ? 'active' : ''}" data-estad-vent="7d">Últimos 7 días</button>
           <button class="filtro-chip ${this.#ventana === '30d' ? 'active' : ''}" data-estad-vent="30d">Últimos 30 días</button>
         </div>
 
-        <!-- Banner de nivel de alerta -->
+        <!-- banner de nivel de alerta -->
 
         <div id="bannerAlertaEstad" class="banner-alerta banner-alerta--normal">
           <span id="textoAlerta">Cargando métricas de la ciudad...</span>
         </div>
 
-        <!-- 3 Tarjetas métricas -->
+        <!-- 3 tarjetas métricas -->
         <div class="metricas-grid">
           <div class="tarjeta-metrica">
             <span class="metrica-numero" id="mTotalFallas">-</span>
@@ -1364,13 +1366,13 @@ export class VistaEstadisticas {
           </div>
         </div>
 
-        <!-- Gráfica de línea en el tiempo -->
+        <!-- gráfica de línea en el tiempo -->
         <div class="grafica-contenedor">
           <span class="grafica-titulo">Evolución de reportes en el tiempo</span>
           <div id="graficaLineaContenedor"></div>
         </div>
 
-        <!-- Gráfica de barras por servicio -->
+        <!-- gráfica de barras por servicio -->
         <div class="grafica-contenedor">
           <span class="grafica-titulo">Reportes por servicio público</span>
           <div id="graficaServiciosContenedor"></div>
@@ -1380,7 +1382,7 @@ export class VistaEstadisticas {
 
     this.#modal.abrir(contenedor);
 
-    // Enlazar botones de ventana
+    // enlazar botones de ventana
     contenedor.querySelectorAll('[data-estad-vent]').forEach((btn) => {
       btn.addEventListener('click', () => {
         this.#ventana = btn.getAttribute('data-estad-vent') || '24h';
@@ -1401,7 +1403,7 @@ export class VistaEstadisticas {
         valor: Number(p.eventos ?? p.total ?? p.valor ?? 0),
       }));
 
-      // Banner de alerta
+      // banner de alerta
       const banner = document.getElementById('bannerAlertaEstad');
       const textoAlerta = document.getElementById('textoAlerta');
       const nivel = res.nivelAlerta || res.nivel || 'Normal';
@@ -1411,7 +1413,7 @@ export class VistaEstadisticas {
         textoAlerta.textContent = `Estado Cívico: Nivel ${nivel} (${res.totalEventos || 0} eventos registrados en la ventana)`;
       }
 
-      // Métricas reales
+      // métricas reales
       const elActivas = document.getElementById('mTotalFallas');
       const elSol = document.getElementById('mSolucionadas');
       const elConf = document.getElementById('mConfirmaciones');
@@ -1420,13 +1422,13 @@ export class VistaEstadisticas {
       if (elSol) elSol.textContent = String(res.solucionadas ?? 0);
       if (elConf) elConf.textContent = String(res.totalConfirmaciones ?? 0);
 
-      // Gráfica de línea temporal
+      // gráfica de línea temporal
       const contenedorLinea = document.getElementById('graficaLineaContenedor');
       if (contenedorLinea) {
         Graficas.linea(contenedorLinea, puntos, { color: '#D0021B' });
       }
 
-      // Gráfica de servicios con conteo real
+      // gráfica de servicios con conteo real
       const contenedorServicios = document.getElementById('graficaServiciosContenedor');
       if (contenedorServicios) {
         const conteoPorServicio = res.porServicio || {};
@@ -1458,7 +1460,7 @@ export class VistaEstadisticas {
 }
 
 /**
- * Diálogo de consulta rápida por código alfanumérico.
+ * diálogo de consulta rápida por código alfanumérico.
  */
 export class DialogoConsultarCodigo {
   #api;
@@ -1518,9 +1520,9 @@ export class DialogoConsultarCodigo {
   }
 }
 
-// Inicialización de la aplicación ciudadana
+// inicialización de la aplicación ciudadana
 document.addEventListener('DOMContentLoaded', async () => {
-  // Registro de service worker para PWA (instalación en celular y soporte offline)
+  // registro de service worker para pwa (instalación en celular y soporte offline)
   if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
     navigator.serviceWorker.register('/sw.js').catch((err) => {
       console.info('Service Worker en desarrollo:', err.message);
@@ -1538,7 +1540,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     origen: '',
   };
 
-  // 1. Instanciar vistas
+  // 1. instanciar vistas
   const fichaIncidencia = new FichaIncidencia(api, modal, () => {
     vistaMapa.cargar(filtrosActuales);
   });
@@ -1556,11 +1558,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     fichaIncidencia.mostrar(id);
   });
 
-  // 2. Conectar botones flotantes
+  // 2. conectar botones flotantes
   document.getElementById('btnReportar')?.addEventListener('click', () => {
-    // Abrir inmediatamente el modal sin retraso
+    // abrir inmediatamente el modal sin retraso
     formularioReporte.iniciar(vistaMapa.ubicacionUsuario);
-    // Si no había ubicación previa, solicitarla en segundo plano para el paso 3
+    // si no había ubicación previa, solicitarla en segundo plano para el paso 3
     if (!vistaMapa.ubicacionUsuario) {
       vistaMapa.geolocalizarUsuario(false).then((loc) => {
         if (loc) {
@@ -1582,11 +1584,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     vistaEstadisticas.mostrar();
   });
 
-  // 3. Cargar catálogos y configurar barra de filtros
+  // 3. cargar catálogos y configurar barra de filtros
   try {
     catalogos = await api.obtenerCatalogos();
 
-    // Inyectar chips de servicios
+    // inyectar chips de servicios
     const contServicios = document.getElementById('filtrosServicios');
     if (contServicios) {
       contServicios.innerHTML = `
@@ -1616,7 +1618,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    // Inyectar sectores en el selector
+    // inyectar sectores en el selector
     const selSector = /** @type {HTMLSelectElement} */ (document.getElementById('filtroSector'));
     if (selSector && catalogos.localidades) {
       catalogos.localidades.forEach((loc) => {
@@ -1632,7 +1634,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    // Filtro selector de ventana de tiempo
+    // filtro selector de ventana de tiempo
     const selVentana = /** @type {HTMLSelectElement} */ (document.getElementById('filtroVentana'));
     if (selVentana) {
       selVentana.addEventListener('change', () => {
@@ -1641,7 +1643,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    // Filtro selector de origen (falla imprevista o corte programado)
+    // filtro selector de origen (falla imprevista o corte programado)
     const selOrigen = /** @type {HTMLSelectElement} */ (document.getElementById('filtroOrigen'));
     if (selOrigen) {
       selOrigen.addEventListener('change', () => {
@@ -1650,7 +1652,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    // Controles de navegación y desplazamiento para chips de servicios
+    // controles de navegación y desplazamiento para chips de servicios
     const contScroll = document.getElementById('filtrosScrollContenedor');
     const btnScrollIzq = /** @type {HTMLButtonElement} */ (document.getElementById('btnScrollFiltrosIzq'));
     const btnScrollDer = /** @type {HTMLButtonElement} */ (document.getElementById('btnScrollFiltrosDer'));
@@ -1663,7 +1665,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnScrollDer.disabled = contScroll.scrollLeft >= maxScroll - 4;
       };
 
-      // Desplazamiento horizontal con rueda del mouse
+      // desplazamiento horizontal con rueda del mouse
       contScroll.addEventListener(
         'wheel',
         (evento) => {
@@ -1691,13 +1693,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       setTimeout(actualizarVisibilidadFlechas, 150);
     }
 
-    // Cargar incidencias iniciales en el mapa
+    // cargar incidencias iniciales en el mapa
     await vistaMapa.cargar(filtrosActuales);
   } catch (err) {
     console.warn('Aviso al cargar catálogos iniciales:', err);
   }
 
-  // 4. Monitorear estado de conexión online/offline
+  // 4. monitorear estado de conexión online/offline
   const barraEstado = document.getElementById('barraEstado');
   const estadoTexto = barraEstado?.querySelector('.estado-texto');
 

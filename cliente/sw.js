@@ -1,11 +1,12 @@
-// Service worker para reportes ciudadanos Cartagena (PWA)
-const CACHE_NAME = 'reportes-ctg-v9';
+// service worker para reportes ciudadanos cartagena (pwa)
+const CACHE_NAME = 'reportes-ctg-v10';
 const ASSETS_ESTATICOS = [
   '/',
   '/index.html',
   '/css/estilos.css',
   '/js/app.js',
   '/js/ClienteApi.js',
+  '/js/seguridad.js',
   '/img/icon.svg',
   '/manifest.webmanifest',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
@@ -38,7 +39,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Peticiones de API van siempre a la red (network-first)
+  // peticiones de api van siempre a la red (network-first)
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(event.request).catch(() => {
@@ -54,7 +55,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Recursos estáticos: network-first con fallback a cache para soporte sin conexión
+  // recursos estáticos: network-first con fallback a cache para soporte sin conexión
   event.respondWith(
     fetch(event.request)
       .then((response) => {
@@ -68,7 +69,7 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// Soporte de notificaciones push nativas
+// soporte de notificaciones push nativas
 self.addEventListener('push', (event) => {
   let payload = { titulo: 'Alerta de Servicios Cartagena', cuerpo: 'Se ha registrado una incidencia en tu sector.' };
   if (event.data) {

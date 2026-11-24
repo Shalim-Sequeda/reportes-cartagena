@@ -479,6 +479,7 @@ export class RepositorioIncidenciasSql extends IRepositorioIncidencias {
 
     return {
       total: totalFilas[0]?.total ?? 0,
+      totalConfirmaciones: this.#cx.consultar('SELECT COALESCE(SUM(confirmaciones), 0) AS total FROM incidencia ' + where, params)[0]?.total ?? 0,
       porEstado,
       porServicio,
       porOrigen,
@@ -515,11 +516,11 @@ export class RepositorioSectoresSql extends IRepositorioSectores {
     if (localidadId) {
       return this.#cx
         .consultar('SELECT * FROM barrio WHERE localidad_id = ? ORDER BY nombre', [localidadId])
-        .map((f) => new Barrio({ id: f.id, nombre: f.nombre, localidadId: f.localidad_id }));
+        .map((f) => ({ id: f.id, nombre: f.nombre, localidadId: f.localidad_id, latitud: f.latitud, longitud: f.longitud }));
     }
     return this.#cx
       .consultar('SELECT * FROM barrio ORDER BY nombre')
-      .map((f) => new Barrio({ id: f.id, nombre: f.nombre, localidadId: f.localidad_id }));
+      .map((f) => ({ id: f.id, nombre: f.nombre, localidadId: f.localidad_id, latitud: f.latitud, longitud: f.longitud }));
   }
 
   /**

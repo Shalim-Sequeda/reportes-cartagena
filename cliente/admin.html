@@ -11,7 +11,7 @@
 </head>
 <body class="admin-body">
 
-  <!-- Login -->
+  <!-- login -->
   <section id="pantallaLogin" class="login-pantalla">
     <form id="formLogin" class="login-form" autocomplete="on">
       <h1 class="login-titulo">Administración</h1>
@@ -29,12 +29,12 @@
     </form>
   </section>
 
-  <!-- Consola admin (oculta hasta login) -->
+  <!-- consola admin (oculta hasta login) -->
   <section id="consolaAdmin" class="admin-consola" hidden>
-    <!-- Sidebar -->
+    <!-- sidebar -->
     <nav class="admin-sidebar" aria-label="Navegación de administración">
       <div class="sidebar-cabecera">
-        <h2 class="sidebar-titulo">Panel Admin</h2>
+        <h2 class="sidebar-titulo">Cartagena<span class="marca-subtitulo">gestión de servicios públicos</span></h2>
         <button id="btnCerrarSesion" class="btn btn--texto sidebar-cerrar" aria-label="Cerrar sesión">Salir</button>
       </div>
       <ul class="sidebar-nav">
@@ -65,17 +65,18 @@
       </ul>
     </nav>
 
-    <!-- Botón hamburguesa mobile -->
+    <!-- botón hamburguesa mobile -->
     <button id="btnMenuAdmin" class="admin-menu-toggle" aria-label="Abrir menú" aria-expanded="false">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     </button>
 
-    <!-- Contenido principal -->
+    <!-- contenido principal -->
     <main class="admin-main">
-      <!-- Sección incidencias -->
+      <!-- sección incidencias -->
 
       <div id="seccionIncidencias" class="admin-seccion active" data-seccion="incidencias">
         <h2 class="seccion-titulo">Incidencias</h2>
+        <p class="seccion-descripcion">Revisa los reportes de la comunidad, depura información y consolida incidencias duplicadas.</p>
         <div class="admin-filtros">
           <select id="adminFiltroServicio" class="filtro-select" aria-label="Filtrar por servicio">
             <option value="">Todos los servicios</option>
@@ -108,17 +109,18 @@
         <div id="paginacionIncidencias" class="paginacion"></div>
       </div>
 
-      <!-- Sección cortes -->
+      <!-- sección cortes -->
 
       <div id="seccionCortes" class="admin-seccion" data-seccion="cortes">
-        <h2 class="seccion-titulo">Cortes Programados</h2>
+        <h2 class="seccion-titulo">Cortes programados</h2>
+        <p class="seccion-descripcion">Publica interrupciones oficiales y consulta su historial. Los cortes se cierran al finalizar el horario.</p>
         <div class="cortes-layout">
           <div class="cortes-lista" id="cortesLista">
-            <!-- lista inyectada por JS -->
+            <!-- lista inyectada por js -->
           </div>
           <div class="cortes-formulario">
             <h3 class="form-subtitulo">Registrar nuevo corte</h3>
-            <form id="formCorte" class="form-vertical">
+            <form id="formCorte" class="form-vertical corte-grid">
               <div class="campo">
                 <label for="corteServicio" class="campo-label">Servicio</label>
                 <select id="corteServicio" class="campo-input" required></select>
@@ -147,19 +149,26 @@
                 <textarea id="corteDescripcion" class="campo-input campo-textarea" rows="3" required></textarea>
               </div>
               <div class="campo">
+                <label for="corteSector" class="campo-label">Sector de referencia</label>
+                <select id="corteSector" class="campo-input"><option value="">Selecciona un barrio o marca el mapa</option></select>
+              </div>
+              <div class="campo campo-amplio">
                 <label class="campo-label">Ubicación</label>
+                <p class="campo-ayuda">Toca el mapa o arrastra el marcador para precisar el punto. El servidor determina el sector definitivo.</p>
                 <div id="corteMapaMini" class="mapa-mini"></div>
               </div>
+              <p id="corteError" class="validacion-contextual campo-amplio" role="alert" hidden></p>
               <button type="submit" class="btn btn--primario">Registrar corte</button>
             </form>
           </div>
         </div>
       </div>
 
-      <!-- Sección estadísticas -->
+      <!-- sección estadísticas -->
 
       <div id="seccionEstadisticas" class="admin-seccion" data-seccion="estadisticas">
         <h2 class="seccion-titulo">Estadísticas</h2>
+        <p class="seccion-descripcion">Indicadores de participación ciudadana y distribución de incidencias por servicio.</p>
         <div class="admin-filtros">
           <input type="date" id="estadDesde" class="filtro-select" aria-label="Desde">
           <input type="date" id="estadHasta" class="filtro-select" aria-label="Hasta">
@@ -167,14 +176,15 @@
           <button id="btnExportarCsv" class="btn btn--secundario btn--sm">Exportar CSV</button>
         </div>
         <div id="estadContenido" class="estad-contenido">
-          <!-- charts inyectados por JS -->
+          <!-- charts inyectados por js -->
         </div>
       </div>
 
-      <!-- Sección bitácora -->
+      <!-- sección bitácora -->
 
       <div id="seccionBitacora" class="admin-seccion" data-seccion="bitacora">
         <h2 class="seccion-titulo">Bitácora de Auditoría</h2>
+        <p class="seccion-descripcion">Registro de las acciones administrativas para seguimiento y trazabilidad.</p>
         <div class="tabla-contenedor">
           <table class="admin-tabla" id="tablaBitacora">
             <thead>
@@ -193,17 +203,17 @@
     </main>
   </section>
 
-  <!-- Modal admin -->
+  <!-- modal admin -->
   <div id="adminModal" class="modal-overlay" aria-hidden="true">
     <div class="modal-panel" role="dialog" aria-modal="true">
       <div class="modal-contenido" id="adminModalContenido"></div>
     </div>
   </div>
 
-  <!-- Toast -->
+  <!-- toast -->
   <div id="contenedorToast" class="toast-contenedor" aria-live="assertive"></div>
 
-  <!-- Spinner -->
+  <!-- spinner -->
   <div id="spinner" class="spinner-overlay" aria-hidden="true">
     <div class="spinner" role="progressbar" aria-label="Cargando"></div>
   </div>
