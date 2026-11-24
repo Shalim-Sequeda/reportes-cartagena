@@ -307,14 +307,8 @@ export class ServidorHttp {
 
     const ext = extname(rutaNormalizada).toLowerCase();
     const contentType = ServidorHttp.TIPOS_MIME[ext] || 'application/octet-stream';
-    const cacheControl = ext === '.html'
-      ? 'no-cache, must-revalidate'
-      : 'public, max-age=86400, stale-while-revalidate=604800';
 
-    res.writeHead(200, {
-      'Content-Type': contentType,
-      'Cache-Control': cacheControl,
-    });
+    res.writeHead(200, { 'Content-Type': contentType });
     res.end(readFileSync(rutaNormalizada));
   }
 
