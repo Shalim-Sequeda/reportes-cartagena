@@ -22,6 +22,8 @@ La ficha informa al cliente si el dispositivo actual ya confirmó el reporte. El
 
 ## Administración
 
+La navegación lateral permanece fija. El contenido principal tiene desplazamiento independiente y conserva el acceso al menú. Los indicadores estadísticos se presentan en una franja de resumen, sin tarjetas individuales. La distribución por servicio conserva los nombres completos y utiliza una escala numérica entera. Filtros, tablas y formularios se organizan por espaciado y jerarquía tipográfica, sin contenedores decorativos adicionales.
+
 La consola conserva incidencias, cortes programados, estadísticas y bitácora. La sesión administrativa reside en sessionStorage y se transmite mediante Authorization. Al salir se limpian las credenciales, las tablas y el token local; se descartan las respuestas de consultas iniciadas en la sesión anterior.
 
 ## Cartografía y fotografías

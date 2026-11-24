@@ -1,7 +1,8 @@
 // @ts-check
 import { escaparHtml, limpiarCredenciales } from './seguridad.js';
 import { ClienteApi } from './ClienteApi.js';
-import { COLORES_SERVICIOS, Graficas, Modal, Toast, generarHtmlPin } from './app.js?v=20';
+import { COLORES_SERVICIOS, Modal, Toast, generarHtmlPin } from './app.js?v=20';
+import { mostrarEstadisticas } from './estadisticasVista.js?v=21';
 
 /**
  * consola de administración y moderación del sistema de reportes ciudadanos de cartagena.
@@ -224,6 +225,8 @@ export class ConsolaAdmin {
 
   #cargarSeccion(nombreSeccion) {
     this.#seccionActiva = nombreSeccion;
+    const contenido = document.querySelector('.admin-main');
+    if (contenido) contenido.scrollTop = 0;
     document.querySelectorAll('.admin-seccion').forEach((sec) => {
       sec.classList.toggle('active', sec.getAttribute('data-seccion') === nombreSeccion);
     });
@@ -640,40 +643,7 @@ export class ConsolaAdmin {
       if (version !== this.#versionSesion) return;
       stats.totalActivas = stats.porEstado?.find(e => e.estado === 'Reportado')?.total || 0;
       stats.totalSolucionadas = stats.porEstado?.find(e => e.estado === 'Solucionado')?.total || 0;
-      contenedor.innerHTML = `
-        <div class="metricas-grid"><div class="tarjeta-metrica"><span class="metrica-numero">${stats.totalConfirmaciones || 0}</span><span class="metrica-etiqueta">Confirmaciones</span></div>
-          <div class="tarjeta-metrica">
-            <span class="metrica-numero">${stats.totalIncidencias || stats.total || 0}</span>
-            <span class="metrica-etiqueta">Total reportes</span>
-          </div>
-          <div class="tarjeta-metrica">
-            <span class="metrica-numero">${stats.totalActivas || 0}</span>
-            <span class="metrica-etiqueta">Activas</span>
-          </div>
-          <div class="tarjeta-metrica">
-            <span class="metrica-numero">${stats.totalSolucionadas || 0}</span>
-            <span class="metrica-etiqueta">Solucionadas</span>
-          </div>
-        </div>
-
-        <div style="display:grid;grid-template-columns:1fr;gap:16px;margin-top:16px;">
-          <div class="grafica-contenedor">
-            <span class="grafica-titulo">Distribución por Servicio</span>
-            <div id="graficaAdminServicios"></div>
-          </div>
-        </div>
-      `;
-
-      // graficar barras de servicios
-      const contGrafica = document.getElementById('graficaAdminServicios');
-      if (contGrafica) {
-        const datos = (stats.porServicio || []).map((s) => ({
-          etiqueta: s.nombre || s.etiqueta,
-          valor: s.total || s.valor || 0,
-          color: COLORES_SERVICIOS[s.servicio_id || s.id]?.color || '#4A90D9',
-        }));
-        Graficas.barrasHorizontales(contGrafica, datos);
-      }
+      mostrarEstadisticas(contenedor, stats);
     } catch (err) {
       Toast.mostrar('Error al obtener estadísticas: ' + err.message, 'error');
     }
