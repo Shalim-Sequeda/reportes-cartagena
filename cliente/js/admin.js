@@ -543,7 +543,8 @@ export class ConsolaAdmin {
       cont.innerHTML = '';
 
       if (incidencias.length === 0) {
-        cont.innerHTML = '<p style="color:#6B7280;padding:16px;">No hay cortes programados registrados.</p>';
+        cont.innerHTML = '<div class="estado-vacio"><strong>Sin cortes programados</strong><p>Los cortes oficiales aparecerán aquí con su servicio, horario y estado.</p><button type="button" class="btn btn--secundario" id="btnPrimerCorte">Registrar primer corte</button></div>';
+        document.getElementById('btnPrimerCorte')?.addEventListener('click', () => document.getElementById('corteServicio')?.focus());
         return;
       }
 

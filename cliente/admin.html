@@ -87,8 +87,8 @@
             <option value="Solucionado">Solucionado</option>
             <option value="Archivado">Archivado</option>
           </select>
-          <input type="date" id="adminFiltroDesde" class="filtro-select" aria-label="Desde">
-          <input type="date" id="adminFiltroHasta" class="filtro-select" aria-label="Hasta">
+          <label class="admin-filtro-campo">Desde<input type="date" id="adminFiltroDesde" class="filtro-select"></label>
+          <label class="admin-filtro-campo">Hasta<input type="date" id="adminFiltroHasta" class="filtro-select"></label>
           <button id="adminBtnFiltrar" class="btn btn--primario btn--sm">Filtrar</button>
         </div>
         <div class="tabla-contenedor">
@@ -170,8 +170,8 @@
         <h2 class="seccion-titulo">Estadísticas</h2>
         <p class="seccion-descripcion">Indicadores de participación ciudadana y distribución de incidencias por servicio.</p>
         <div class="admin-filtros">
-          <input type="date" id="estadDesde" class="filtro-select" aria-label="Desde">
-          <input type="date" id="estadHasta" class="filtro-select" aria-label="Hasta">
+          <label class="admin-filtro-campo">Desde<input type="date" id="estadDesde" class="filtro-select"></label>
+          <label class="admin-filtro-campo">Hasta<input type="date" id="estadHasta" class="filtro-select"></label>
           <button id="btnCalcularEstad" class="btn btn--primario btn--sm">Calcular</button>
           <button id="btnExportarCsv" class="btn btn--secundario btn--sm">Exportar CSV</button>
         </div>
