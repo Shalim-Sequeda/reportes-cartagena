@@ -308,7 +308,7 @@ export class ServidorHttp {
     const ext = extname(rutaNormalizada).toLowerCase();
     const contentType = ServidorHttp.TIPOS_MIME[ext] || 'application/octet-stream';
 
-    res.writeHead(200, { 'Content-Type': contentType });
+    res.writeHead(200, { 'Content-Type': contentType, 'Cache-Control': 'no-cache' });
     res.end(readFileSync(rutaNormalizada));
   }
 

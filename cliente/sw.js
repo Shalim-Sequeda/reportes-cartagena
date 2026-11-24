@@ -1,5 +1,5 @@
 // service worker para reportes ciudadanos cartagena (pwa)
-const CACHE_NAME = 'reportes-ctg-v10';
+const CACHE_NAME = 'reportes-ctg-v11';
 const ASSETS_ESTATICOS = [
   '/',
   '/index.html',

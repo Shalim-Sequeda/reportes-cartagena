@@ -60,16 +60,33 @@ export class Toast {
    * muestra un mensaje emergente.
    * @param {string} mensaje
    * @param {'exito'|'error'|'info'} [tipo='info']
-   * @param {number} [duracionMs=4000]
+   * @param {number} [duracionMs=1800]
    */
-  static mostrar(mensaje, tipo = 'info', duracionMs = 4000) {
+  static mostrar(mensaje, tipo = 'info', duracionMs = 1800) {
     const contenedor = document.getElementById('contenedorToast');
     if (!contenedor) return;
 
     const toast = document.createElement('div');
     toast.className = `toast toast--${tipo}`;
-    toast.setAttribute('role', 'alert');
-    toast.textContent = mensaje;
+    toast.setAttribute('role', tipo === 'error' ? 'alert' : 'status');
+    const texto = document.createElement('span');
+    texto.className = 'toast-mensaje';
+    texto.textContent = mensaje;
+    const cerrar = document.createElement('button');
+    cerrar.type = 'button';
+    cerrar.className = 'toast-cerrar';
+    cerrar.setAttribute('aria-label', 'Cerrar aviso');
+    cerrar.textContent = '×';
+    toast.append(texto, cerrar);
+    const duracion = tipo === 'error' ? 2800 : Math.min(Math.max(duracionMs, 1200), 1800);
+    let temporizador;
+    const retirar = () => {
+      clearTimeout(temporizador);
+      toast.classList.remove('visible');
+      setTimeout(() => toast.remove(), 140);
+    };
+    cerrar.addEventListener('click', retirar);
+    for (const anterior of contenedor.querySelectorAll('.toast')) anterior.remove();
 
     contenedor.appendChild(toast);
 
@@ -78,10 +95,7 @@ export class Toast {
       toast.classList.add('visible');
     });
 
-    setTimeout(() => {
-      toast.classList.remove('visible');
-      toast.addEventListener('transitionend', () => toast.remove(), { once: true });
-    }, duracionMs);
+    temporizador = setTimeout(retirar, duracion);
   }
 }
 

@@ -1809,6 +1809,30 @@ a {
   }
 }
 
+/* avisos breves y diálogos de acción */
+.toast-contenedor { top: auto; bottom: calc(160px + env(safe-area-inset-bottom)); max-width: 420px; }
+.toast {
+  width: 100%; padding: 10px 10px 10px 16px; gap: 12px;
+  border: 1px solid #cbd5e1; border-left: 4px solid #2563eb;
+  background: #fff; color: #0f172a; border-radius: 10px;
+  font-size: 14px; font-weight: 500; line-height: 1.45;
+  box-shadow: 0 8px 32px rgb(15 23 42 / 16%);
+  transform: translateY(8px); transition: opacity 120ms ease, transform 120ms ease;
+}
+.toast--exito { background: #f0fdf4; color: #14532d; border-left-color: #15803d; }
+.toast--error { background: #fff1f2; color: #881337; border-left-color: #dc2626; }
+.toast--info { background: #eff6ff; color: #1e3a8a; border-left-color: #2563eb; }
+.toast-mensaje { flex: 1; overflow-wrap: anywhere; }
+.toast-cerrar { display: grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; border: 0; border-radius: 6px; color: inherit; background: transparent; font-size: 24px; cursor: pointer; }
+.toast-cerrar:hover { background: rgb(15 23 42 / 7%); }
+.modal-overlay { background: rgb(15 23 42 / 48%); backdrop-filter: blur(4px); }
+.modal-panel { border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 24px 80px rgb(15 23 42 / 25%); }
+.modal-cabecera { padding: 20px 24px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+.modal-titulo { font-size: 21px; letter-spacing: -.4px; }
+.modal-cerrar { width: 44px; height: 44px; border-radius: 8px; color: #475569; background: #e2e8f0; }
+.modal-cuerpo { padding: 24px; }
+.modal-pie { padding: 16px 24px; background: #f8fafc; gap: 12px; }
+
 /* identidad institucional y superficies de trabajo */
 :root {
   --color-fondo: #f8fafc;
