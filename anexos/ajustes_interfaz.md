@@ -1,5 +1,7 @@
 # Ajustes de interfaz
 
+La vista de escritorio separa un panel lateral de exploración y el mapa. El panel reúne servicios, filtros, leyenda y acciones; solo la zona de filtros se desplaza cuando falta altura. La vista móvil mantiene servicios horizontales con centrado de la selección, filtros plegables y acciones inferiores etiquetadas. Zoom y ubicación se agrupan en el borde derecho del mapa. La redistribución no modifica la fórmula ni la normalización del mapa de calor.
+
 La revisión de composición incorpora filtros secundarios plegables, una barra de acciones ciudadanas con etiquetas y un asistente de reporte con servicios en filas. El asistente conserva los tres pasos, mantiene las acciones visibles mientras se desplaza el contenido y contiene/restaura el foco del teclado al abrir/cerrar. Los controles secundarios conservan sus valores al plegarse; no cambia el contrato de consulta ni de registro. Se versionan las referencias de estilos y del módulo ciudadano para evitar combinaciones de recursos anteriores.
 
 Se conservan los cuatro apartados de IU-04: incidencias (RF-09), cortes programados (RF-07), estadísticas (RF-10) y bitácora.

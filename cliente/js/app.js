@@ -1559,6 +1559,18 @@ export class DialogoConsultarCodigo {
 
 // inicialización de la aplicación ciudadana
 document.addEventListener('DOMContentLoaded', async () => {
+  const pantallaAmplia = matchMedia('(min-width: 769px)');
+  const detalleFiltros = document.querySelector('.filtros-detalle');
+  const adaptarFiltros = () => {
+    if (detalleFiltros) detalleFiltros.open = pantallaAmplia.matches;
+  };
+  adaptarFiltros();
+  pantallaAmplia.addEventListener('change', adaptarFiltros);
+  window.addEventListener('resize', () => {
+    if (!pantallaAmplia.matches) requestAnimationFrame(() => {
+      document.querySelector('#filtrosServicios .active')?.scrollIntoView({ behavior: 'instant', inline: 'center', block: 'nearest' });
+    });
+  });
   // registro de service worker para pwa (instalación en celular y soporte offline)
   if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
     navigator.serviceWorker.register('/sw.js').catch((err) => {
@@ -1646,9 +1658,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       `;
 
       contServicios.querySelectorAll('.filtro-chip').forEach((chip) => {
+        chip.setAttribute('aria-pressed', String(chip.classList.contains('active')));
         chip.addEventListener('click', () => {
-          contServicios.querySelectorAll('.filtro-chip').forEach((c) => c.classList.remove('active'));
+          contServicios.querySelectorAll('.filtro-chip').forEach((c) => { c.classList.remove('active'); c.setAttribute('aria-pressed', 'false'); });
           chip.classList.add('active');
+          chip.setAttribute('aria-pressed', 'true');
+          if (!pantallaAmplia.matches) chip.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', inline: 'center', block: 'nearest' });
           filtrosActuales.servicio = chip.getAttribute('data-servicio') || '';
           vistaMapa.cargar(filtrosActuales);
         });
@@ -1706,7 +1721,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       contScroll.addEventListener(
         'wheel',
         (evento) => {
-          if (evento.deltaY !== 0) {
+          if (!pantallaAmplia.matches && evento.deltaY !== 0) {
             evento.preventDefault();
             contScroll.scrollLeft += evento.deltaY;
             actualizarVisibilidadFlechas();

@@ -2089,3 +2089,48 @@ h1, h2, h3 { letter-spacing: 0; }
   .wizard-reporte .modal-pie { padding: 12px 20px calc(12px + env(safe-area-inset-bottom)); }
   .admin-main { padding: 76px 16px 24px; }
 }
+
+/* composición de exploración por plataforma */
+.panel-exploracion { display: contents; }
+.exploracion-cabecera { display: none; }
+.leyenda-titulo { display: none; }
+#btnMiUbicacion { position: fixed; z-index: var(--z-controles); right: 16px; top: 148px; bottom: auto; width: 44px; height: 44px; min-height: 44px; padding: 0; border-radius: 6px; background: white; border: 1px solid #cbd5e1; box-shadow: var(--sombra-sm); }
+.leaflet-top.leaflet-right .leaflet-control-zoom { margin-top: 16px; margin-right: 16px; }
+@media (min-width: 769px) {
+  .panel-exploracion { position: absolute; top: 56px; bottom: 0; left: 0; width: 300px; padding: 20px; display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; gap: 18px; background: #fff; border-right: 1px solid #e2e8f0; overflow: hidden; z-index: var(--z-filtros); }
+  .exploracion-cabecera { display: block; }
+  .exploracion-etiqueta { display: block; color: #64748b; font-size: 10px; font-weight: 600; letter-spacing: 1px; margin-bottom: 8px; }
+  .exploracion-cabecera h1 { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+  .exploracion-cabecera p { color: #64748b; font-size: 13px; line-height: 1.6; }
+  #mapa { left: 300px; width: calc(100% - 300px); }
+  .panel-exploracion .barra-filtros { position: static; transform: none; width: 100%; display: flex; flex-direction: column; align-items: stretch; gap: 16px; padding: 0 4px 0 0; border: 0; border-radius: 0; box-shadow: none; overflow-y: auto; min-height: 0; scrollbar-width: thin; }
+  .panel-exploracion .filtros-servicios-envoltorio { display: block; flex: none; }
+  .panel-exploracion .btn-scroll-filtros { display: none; }
+  .panel-exploracion .filtros-scroll { overflow: visible; display: block; padding: 0; }
+  .panel-exploracion .filtros-servicios { display: grid; grid-template-columns: 1fr; gap: 5px; }
+  .panel-exploracion .filtro-chip { width: 100%; min-height: 44px; justify-content: flex-start; border-color: transparent; background: white; padding: 0 12px; font-size: 13px; }
+  .panel-exploracion .filtro-chip.active { background: #eaf1fd; color: #1d4ed8; border-color: #d1e0fa; }
+  .panel-exploracion .filtro-chip:hover { background: #f1f5f9; }
+  .panel-exploracion .filtros-detalle summary { border: 0; padding: 0; min-height: 28px; font-size: 13px; }
+  .panel-exploracion .filtros-detalle summary::after { margin-left: auto; }
+  .panel-exploracion .filtros-secundarios { display: grid; gap: 10px; padding: 12px 0 0; }
+  .panel-exploracion .filtro-select { width: 100%; }
+  .panel-exploracion .leyenda { position: static; display: flex; flex-wrap: wrap; justify-content: space-between; box-shadow: none; border: 0; padding: 0; margin: 0; width: 100%; gap: 8px; }
+  .leyenda-titulo { display: block; flex-basis: 100%; font-size: 12px; color: #526176; margin-bottom: 4px; }
+  .panel-exploracion .leyenda-gradiente { flex: 1; }
+  .panel-exploracion .acciones-mapa { position: static; transform: none; display: flex; flex-direction: column; align-items: stretch; margin-top: auto; width: 100%; border: 0; box-shadow: none; padding: 8px 0 0; gap: 12px; }
+  .panel-exploracion .grupo-flotante--izq { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .panel-exploracion .grupo-flotante--izq .fab { min-width: 0; padding: 0 6px; gap: 6px; font-size: 12px; border: 1px solid #e2e8f0; border-radius: 8px; }
+  .panel-exploracion #btnReportar { width: 100%; border-radius: 8px; }
+  body:has(.panel-exploracion) .leaflet-top.leaflet-right .leaflet-control-zoom { margin-top: 16px; }
+}
+@media (max-width: 768px) {
+  .barra-filtros { grid-template-columns: minmax(0, 1fr) auto; }
+  .filtros-scroll { scroll-padding-inline: 12px; }
+  .filtros-servicios { padding-inline: 4px; }
+  .filtro-chip { flex-shrink: 0; }
+  #btnMiUbicacion { top: 222px; right: 12px; }
+  .leaflet-top.leaflet-right .leaflet-control-zoom { margin-top: 88px; margin-right: 12px; }
+  body:has(.filtros-detalle[open]) #btnMiUbicacion { top: 394px; }
+  body:has(.filtros-detalle[open]) .leaflet-top.leaflet-right .leaflet-control-zoom { margin-top: 260px; }
+}
