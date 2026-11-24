@@ -1,5 +1,5 @@
 // @ts-check
-import { escaparHtml } from './seguridad.js';
+import { escaparHtml, limpiarCredenciales } from './seguridad.js';
 import { ClienteApi } from './ClienteApi.js';
 import { COLORES_SERVICIOS, Graficas, Modal, Toast, generarHtmlPin } from './app.js';
 
@@ -8,6 +8,7 @@ import { COLORES_SERVICIOS, Graficas, Modal, Toast, generarHtmlPin } from './app
  */
 export class ConsolaAdmin {
   #api;
+  #versionSesion = 0;
   #modal;
   #catalogos = { servicios: [], localidades: [], barrios: [], empresas: [] };
   #seccionActiva = 'incidencias';
@@ -51,6 +52,9 @@ export class ConsolaAdmin {
 
   // manejo de sesión y autenticación
   #mostrarLogin() {
+    limpiarCredenciales(document.getElementById('formLogin'));
+    const error = document.getElementById('loginError');
+    if (error) { error.textContent = ''; error.hidden = true; }
     const pantallaLogin = document.getElementById('pantallaLogin');
     const consolaAdmin = document.getElementById('consolaAdmin');
     if (pantallaLogin) {
@@ -77,7 +81,17 @@ export class ConsolaAdmin {
   }
 
   #cerrarSesionLocal() {
+    this.#versionSesion++;
     this.#api.establecerToken(null);
+    this.#modal.cerrar();
+    this.#incidenciasCache = [];
+    this.#paginaActual = 1;
+    for (const id of ['tbodyIncidencias', 'paginacionIncidencias', 'cortesLista', 'estadContenido', 'tbodyBitacora', 'contenedorToast']) {
+      document.getElementById(id)?.replaceChildren();
+    }
+    document.getElementById('formCorte')?.reset();
+    document.querySelector('.admin-sidebar')?.classList.remove('abierto');
+    document.getElementById('btnMenuAdmin')?.setAttribute('aria-expanded', 'false');
     this.#mostrarLogin();
   }
 
@@ -90,10 +104,12 @@ export class ConsolaAdmin {
       if (errorBox) errorBox.hidden = true;
 
       const usuario = /** @type {HTMLInputElement} */ (document.getElementById('loginUsuario'))?.value.trim();
-      const clave = /** @type {HTMLInputElement} */ (document.getElementById('loginClave'))?.value;
+      let clave = /** @type {HTMLInputElement} */ (document.getElementById('loginClave'))?.value;
 
       try {
         await this.#api.iniciarSesion(usuario, clave);
+        clave = '';
+        limpiarCredenciales(form);
         await this.#cargarCatalogos();
         this.#mostrarConsola();
         this.#cargarSeccion('incidencias');
@@ -103,14 +119,18 @@ export class ConsolaAdmin {
           errorBox.textContent = err.message || 'Credenciales incorrectas.';
           errorBox.hidden = false;
         }
+      } finally {
+        clave = '';
+        limpiarCredenciales(form);
       }
     });
 
     document.getElementById('btnCerrarSesion')?.addEventListener('click', async () => {
-      try {
-        await this.#api.cerrarSesion();
-      } catch {}
+      const cierre = this.#api.cerrarSesion();
       this.#cerrarSesionLocal();
+      try {
+        await cierre;
+      } catch {}
       Toast.mostrar('Sesión cerrada.', 'info');
     });
 
@@ -234,6 +254,7 @@ export class ConsolaAdmin {
   }
 
   async #cargarIncidencias() {
+    const version = this.#versionSesion;
     const servicio = /** @type {HTMLSelectElement} */ (document.getElementById('adminFiltroServicio'))?.value;
     const estado = /** @type {HTMLSelectElement} */ (document.getElementById('adminFiltroEstado'))?.value;
 
@@ -241,7 +262,9 @@ export class ConsolaAdmin {
       const desde = document.getElementById('adminFiltroDesde').value;
       const hasta = document.getElementById('adminFiltroHasta').value;
       const filtros = { servicio, estado, desde, hasta };
-      this.#incidenciasCache = await this.#api.obtenerIncidenciasAdmin(filtros);
+      const incidencias = await this.#api.obtenerIncidenciasAdmin(filtros);
+      if (version !== this.#versionSesion) return;
+      this.#incidenciasCache = incidencias;
       this.#renderizarTablaIncidencias();
     } catch (err) {
       if (err.status === 401) {
@@ -535,11 +558,13 @@ export class ConsolaAdmin {
   }
 
   async #cargarCortes() {
+    const version = this.#versionSesion;
     const cont = document.getElementById('cortesLista');
     if (!cont) return;
 
     try {
       const incidencias = await this.#api.obtenerIncidenciasAdmin({ origen: 'corte_programado' });
+      if (version !== this.#versionSesion) return;
       cont.innerHTML = '';
 
       if (incidencias.length === 0) {
@@ -603,6 +628,7 @@ export class ConsolaAdmin {
   }
 
   async #cargarEstadisticas() {
+    const version = this.#versionSesion;
     const contenedor = document.getElementById('estadContenido');
     if (!contenedor) return;
 
@@ -611,6 +637,7 @@ export class ConsolaAdmin {
 
     try {
       const stats = await this.#api.obtenerEstadisticas(desde, hasta, 'json');
+      if (version !== this.#versionSesion) return;
       stats.totalActivas = stats.porEstado?.find(e => e.estado === 'Reportado')?.total || 0;
       stats.totalSolucionadas = stats.porEstado?.find(e => e.estado === 'Solucionado')?.total || 0;
       contenedor.innerHTML = `
@@ -654,11 +681,13 @@ export class ConsolaAdmin {
 
   // sección: bitácora de auditoría
   async #cargarBitacora() {
+    const version = this.#versionSesion;
     const tbody = document.getElementById('tbodyBitacora');
     if (!tbody) return;
 
     try {
       const registros = await this.#api.obtenerBitacora();
+      if (version !== this.#versionSesion) return;
       tbody.innerHTML = '';
 
       if (!registros || registros.length === 0) {

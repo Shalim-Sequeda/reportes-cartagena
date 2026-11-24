@@ -13,16 +13,16 @@
 
   <!-- login -->
   <section id="pantallaLogin" class="login-pantalla">
-    <form id="formLogin" class="login-form" autocomplete="on">
+    <form id="formLogin" class="login-form" autocomplete="off">
       <h1 class="login-titulo">Administración</h1>
       <p class="login-subtitulo">Reportes Ciudadanos — Cartagena</p>
       <div class="login-campo">
         <label for="loginUsuario" class="campo-label">Usuario</label>
-        <input type="text" id="loginUsuario" name="usuario" class="campo-input" autocomplete="username" required>
+        <input type="text" id="loginUsuario" name="usuario" class="campo-input" autocomplete="off" autocapitalize="none" spellcheck="false" required>
       </div>
       <div class="login-campo">
         <label for="loginClave" class="campo-label">Contraseña</label>
-        <input type="password" id="loginClave" name="clave" class="campo-input" autocomplete="current-password" required>
+        <input type="password" id="loginClave" name="clave" class="campo-input" autocomplete="off" required>
       </div>
       <div id="loginError" class="login-error" role="alert" hidden></div>
       <button type="submit" class="btn btn--primario login-btn">Iniciar sesión</button>
@@ -220,6 +220,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script type="module" src="js/admin.js"></script>
+  <script type="module" src="js/admin.js?v=14"></script>
 </body>
 </html>
