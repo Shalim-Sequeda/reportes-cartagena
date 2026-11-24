@@ -1,7 +1,7 @@
 // @ts-check
 import { ClienteApi } from './ClienteApi.js';
 import { escaparHtml } from './seguridad.js';
-import { crearCapaCalor } from './calor.js?v=19';
+import { crearCapaCalor } from './calor.js?v=20';
 
 /**
  * paleta fija de servicios y estados de cartagena.

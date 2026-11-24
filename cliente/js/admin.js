@@ -1,7 +1,7 @@
 // @ts-check
 import { escaparHtml, limpiarCredenciales } from './seguridad.js';
 import { ClienteApi } from './ClienteApi.js';
-import { COLORES_SERVICIOS, Graficas, Modal, Toast, generarHtmlPin } from './app.js?v=19';
+import { COLORES_SERVICIOS, Graficas, Modal, Toast, generarHtmlPin } from './app.js?v=20';
 
 /**
  * consola de administración y moderación del sistema de reportes ciudadanos de cartagena.

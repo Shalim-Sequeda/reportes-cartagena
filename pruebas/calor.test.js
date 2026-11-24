@@ -1,18 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { prepararCalor, colorizarCampo } from '../cliente/js/calor.js';
+import { prepararCalor, colorizarCampo, metrosAPixeles } from '../cliente/js/calor.js';
 import { GeneradorCapaCalor } from '../src/negocio/geografia.js';
 const punto = (confirmaciones = 1, lat = 10.4, lon = -75.5) => ({ lat, lon, confirmaciones, estado: 'Reportado', origen: 'falla_imprevista' });
 
 test('un reporte aislado empieza bajo y crece en intensidad y radio con los respaldos', () => {
   const casos = [1, 5, 11, 23, 1000].map(c => prepararCalor([punto(c)])[0]);
   assert.equal(casos[0].intensidad, 1.5 / 12);
-  assert.equal(casos[0].radio, 24);
+  assert.equal(casos[0].radioMetros, 100);
   for (let i = 1; i < casos.length; i++) {
     assert.ok(casos[i].intensidad >= casos[i - 1].intensidad);
-    assert.ok(casos[i].radio > casos[i - 1].radio);
+    assert.ok(casos[i].radioMetros > casos[i - 1].radioMetros);
   }
-  assert.equal(casos.at(-1).radio, 64);
+  assert.equal(casos.at(-1).radioMetros, 300);
   assert.equal(casos.at(-1).intensidad, 1);
 });
 
@@ -20,11 +20,11 @@ test('los reportes próximos suman peso sin duplicarlo y los lejanos no alteran 
   const cercanos = prepararCalor([punto(), punto(1, 10.4002)]);
   assert.equal(cercanos.length, 1);
   assert.equal(cercanos[0].peso, 3);
-  assert.ok(cercanos[0].radio > 24);
+  assert.ok(cercanos[0].radioMetros > 100);
   const lejos = prepararCalor([punto(), punto(100, 10.5)]);
   assert.equal(lejos.length, 2);
   assert.equal(lejos[0].intensidad, 1.5 / 12);
-  assert.equal(lejos[0].radio, 24);
+  assert.equal(lejos[0].radioMetros, 100);
 });
 
 test('la agrupación es determinista y no incorpora cortes ni incidencias cerradas', () => {
@@ -41,6 +41,19 @@ test('el servidor usa una referencia fija independiente de reportes lejanos', ()
   const junto = GeneradorCapaCalor.construir([punto(), punto(100, 10.5)])[0];
   assert.equal(solo.intensidad, junto.intensidad);
   assert.equal(solo.intensidad, .125);
+});
+
+test('la superficie geográfica no cambia al acercar o alejar el mapa', () => {
+  const latitud = 10.4;
+  const caso = prepararCalor([punto(11)])[0];
+  for (let zoom = 11; zoom <= 18; zoom++) {
+    const radio = metrosAPixeles(caso.radioMetros, latitud, zoom);
+    const resolucion = 2 * Math.PI * 6378137 * Math.cos(latitud * Math.PI / 180) / (256 * 2 ** zoom);
+    assert.ok(Math.abs(radio * resolucion - caso.radioMetros) < 1e-8);
+    assert.equal(metrosAPixeles(caso.radioMetros, latitud, zoom + 1), radio * 2);
+  }
+  assert.ok(metrosAPixeles(100, latitud, 11) < 2);
+  assert.ok(metrosAPixeles(100, latitud, 18) > 100);
 });
 
 test('amarillo naranja y rojo tienen la misma visibilidad central', () => {

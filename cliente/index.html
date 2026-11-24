@@ -12,7 +12,7 @@
   <title>Reportes Ciudadanos — Cartagena</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-  <link rel="stylesheet" href="css/estilos.css?v=19">
+  <link rel="stylesheet" href="css/estilos.css?v=20">
 </head>
 <body>
   <!-- barra de estado de conexión -->
@@ -75,12 +75,11 @@
   </nav>
 
   <!-- leyenda de intensidad -->
-  <div id="leyenda" class="leyenda" aria-label="Concentración ponderada: baja con peso menor que 4, media entre 4 y 10, alta desde 10" title="Peso acumulado: 1 por reporte + 0,5 por confirmación. Agrupación aproximada de 120 m; la mancha no delimita la falla.">
+  <div id="leyenda" class="leyenda" aria-label="Concentración de reportes: de baja a alta">
     <span class="leyenda-titulo">Concentración de reportes</span>
-    <span class="leyenda-label">Baja &lt;4</span>
+    <span class="leyenda-label">Baja</span>
     <div class="leyenda-gradiente"></div>
-    <span class="leyenda-label">Alta ≥10</span>
-    <span class="leyenda-nota">Peso: 1 por reporte + 0,5 por confirmación. El tamaño indica participación, no el perímetro de la falla.</span>
+    <span class="leyenda-label">Alta</span>
   </div>
 
   <!-- grupo de botones flotantes inferiores izquierdos -->
@@ -138,6 +137,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script type="module" src="js/app.js?v=19"></script>
+  <script type="module" src="js/app.js?v=20"></script>
 </body>
 </html>

@@ -140,4 +140,4 @@ Para entornos empresariales o servidores de producción con soporte geoespacial 
 ## Licencia y Autores
 
 - **Licencia**: MIT License.
-- **Autoría**: Equipo de Ingeniería de Software - Proyecto de Reportes de Servicios Públicos en Cartagena de Indias.
+- **Autores**: Didier S. Martínez González, Kathleen J. Colina Berdugo y Shalim R. Sequeda Viloria.

@@ -1,5 +1,10 @@
 export const ESCALA_CALOR = Object.freeze({ maximo: 12, rojo: 10, distancia: 120 });
 
+// resolución local de la proyección mercator utilizada por el mapa.
+export function metrosAPixeles(metros, latitud, zoom) {
+  return metros * 256 * 2 ** zoom / (2 * Math.PI * 6378137 * Math.cos(latitud * Math.PI / 180));
+}
+
 export function crearCapaCalor(leaflet, datos) {
   const grupos = prepararCalor(datos);
   const Capa = leaflet.Layer.extend({
@@ -35,7 +40,7 @@ export function crearCapaCalor(leaflet, datos) {
       if (!campo || !cobertura || !salida || !size.x || !size.y || !grupos.length) return;
       for (const g of grupos) {
         const p = this.mapa.latLngToContainerPoint([g.lat, g.lon]);
-        const radio = g.radio + 18;
+        const radio = metrosAPixeles(g.radioMetros, g.lat, this.mapa.getZoom());
         if (p.x < -radio || p.y < -radio || p.x > size.x + radio || p.y > size.y + radio) continue;
         for (const [ctx, intensidad] of [[campo, g.intensidad], [cobertura, 1]]) {
           const gradiente = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, radio);
@@ -111,6 +116,6 @@ export function prepararCalor(datos = []) {
   return grupos.map(g => ({
     lat: g.latSuma / g.peso, lon: g.lonSuma / g.peso, peso: g.peso,
     intensidad: Math.min(g.peso / ESCALA_CALOR.maximo, 1),
-    radio: Math.min(64, Math.round((24 + 12 * Math.log2(1 + Math.max(0, g.peso - 1.5) / 3)) / 4) * 4),
+    radioMetros: Math.min(300, 100 + 50 * Math.log2(1 + Math.max(0, g.peso - 1.5) / 3)),
   }));
 }
