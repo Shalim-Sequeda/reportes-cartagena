@@ -1,23 +1,24 @@
 // Service worker para reportes ciudadanos Cartagena (PWA)
-const CACHE_NAME = 'reportes-ctg-v9';
+const CACHE_NAME = 'reportes-ctg-v10';
+const TILE_CACHE_NAME = 'reportes-ctg-tiles-v1';
 const ASSETS_ESTATICOS = [
   '/',
   '/index.html',
   '/css/estilos.css',
   '/js/app.js',
   '/js/ClienteApi.js',
+  '/lib/leaflet.css',
+  '/lib/leaflet.js',
+  '/lib/leaflet-heat.js',
   '/img/icon.svg',
-  '/manifest.webmanifest',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-  'https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js'
+  '/manifest.webmanifest'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_ESTATICOS).catch((err) => {
-        console.warn('Algunos recursos externos no se precacharon:', err);
+        console.warn('Algunos recursos locales no se precacharon:', err);
       });
     })
   );
@@ -28,7 +29,9 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+        keys
+          .filter((key) => key !== CACHE_NAME && key !== TILE_CACHE_NAME)
+          .map((key) => caches.delete(key))
       );
     })
   );
@@ -38,7 +41,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Peticiones de API van siempre a la red (network-first)
+  // 1. Peticiones de API van siempre a la red (network-first)
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(event.request).catch(() => {
@@ -54,17 +57,43 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Recursos estáticos: network-first con fallback a cache para soporte sin conexión
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        if (response && response.status === 200) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+  // 2. Teselas de mapas: cache-first para carga instantánea y navegación fluida sin cuadros grises
+  if (url.hostname.includes('arcgisonline.com') || url.hostname.includes('tile.openstreetmap.org')) {
+    event.respondWith(
+      caches.open(TILE_CACHE_NAME).then(async (tileCache) => {
+        const coincidencia = await tileCache.match(event.request);
+        if (coincidencia) {
+          return coincidencia;
         }
-        return response;
+        try {
+          const respuestaRed = await fetch(event.request, { mode: 'cors' });
+          if (respuestaRed && respuestaRed.status === 200) {
+            tileCache.put(event.request, respuestaRed.clone());
+          }
+          return respuestaRed;
+        } catch {
+          return coincidencia || new Response('', { status: 408 });
+        }
       })
-      .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // 3. Recursos estáticos locales: stale-while-revalidate para velocidad máxima
+  event.respondWith(
+    caches.match(event.request).then((recursoEnCache) => {
+      const peticionRed = fetch(event.request)
+        .then((respuestaRed) => {
+          if (respuestaRed && respuestaRed.status === 200) {
+            const copia = respuestaRed.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copia));
+          }
+          return respuestaRed;
+        })
+        .catch(() => recursoEnCache);
+
+      return recursoEnCache || peticionRed;
+    })
   );
 });
 

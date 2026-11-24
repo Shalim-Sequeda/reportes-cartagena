@@ -341,8 +341,8 @@ export class VistaMapa {
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
       attribution: '&copy; Esri &mdash; OpenStreetMap contributors',
       maxZoom: 18,
-      updateInterval: 100,
-      keepBuffer: 4,
+      updateInterval: 150,
+      keepBuffer: 6,
     }).addTo(this.#mapa);
 
     // Restringir a límites de Cartagena
@@ -354,13 +354,15 @@ export class VistaMapa {
 
     this.#capaMarcadores = L.layerGroup().addTo(this.#mapa);
 
-    // Refresco automático cada 10s para actualización colaborativa en clase
+    // Refresco automático periódico sólo cuando la pestaña está visible
     this.#intervaloRefresco = setInterval(() => {
-      this.cargar(this.#filtrosActuales);
-    }, 10000);
+      if (!document.hidden) {
+        this.cargar(this.#filtrosActuales);
+      }
+    }, 20000);
 
-    // Búsqueda automática de ubicación gps del usuario al iniciar la aplicación
-    this.geolocalizarUsuario(true);
+    // Búsqueda inicial de ubicación gps sin animación brusca para no descartar teselas
+    this.geolocalizarUsuario(true, false);
   }
 
   get instancia() {
@@ -374,13 +376,15 @@ export class VistaMapa {
   #marcadorUsuario = null;
   #circuloPrecisionUsuario = null;
   #ubicacionUsuario = null;
+  #ultimoHashDatos = '';
 
   /**
    * Obtiene la ubicación gps del usuario, centra el mapa y dibuja el punto azul pulsante.
    * @param {boolean} [centrar=true]
+   * @param {boolean} [esInteraccionUsuario=false] True si fue pulsado explícitamente por el usuario
    * @returns {Promise<{ lat: number, lon: number, precision: number }|null>}
    */
-  async geolocalizarUsuario(centrar = true) {
+  async geolocalizarUsuario(centrar = true, esInteraccionUsuario = false) {
     if (!navigator.geolocation) {
       if (centrar) Toast.mostrar('Tu navegador no admite geolocalización.', 'info');
       return null;
@@ -431,7 +435,7 @@ export class VistaMapa {
               zIndexOffset: 1000,
             }).addTo(this.#mapa);
 
-            // Centrar el mapa con animación suave si se solicita
+            // Centrar el mapa: suave si es al inicio, flyTo completo si el usuario lo pulsó
             if (centrar) {
               if (
                 lat >= VistaMapa.LIMITES.sur &&
@@ -439,8 +443,12 @@ export class VistaMapa {
                 lon >= VistaMapa.LIMITES.oeste &&
                 lon <= VistaMapa.LIMITES.este
               ) {
-                this.#mapa.flyTo([lat, lon], 16, { duration: 1.2 });
-              } else {
+                if (esInteraccionUsuario) {
+                  this.#mapa.flyTo([lat, lon], 16, { duration: 1.0 });
+                } else {
+                  this.#mapa.panTo([lat, lon], { animate: true, duration: 0.6 });
+                }
+              } else if (esInteraccionUsuario) {
                 Toast.mostrar('Tu ubicación gps está fuera del distrito de Cartagena.', 'info');
               }
             }
@@ -460,17 +468,28 @@ export class VistaMapa {
   #filtrosActuales = {};
 
   /**
-   * Consulta incidencias con filtros actuales y redibuja capas.
+   * Consulta incidencias con filtros actuales y redibuja capas de manera eficiente.
    * @param {object} [filtros=null]
+   * @param {boolean} [forzar=false]
    */
-  async cargar(filtros = null) {
+  async cargar(filtros = null, forzar = false) {
     if (filtros !== null && typeof filtros === 'object') {
+      const cambioFiltros = JSON.stringify(filtros) !== JSON.stringify(this.#filtrosActuales);
+      if (cambioFiltros) forzar = true;
       this.#filtrosActuales = { ...filtros };
     }
     try {
       const res = await this.#api.obtenerIncidencias(this.#filtrosActuales);
       const lista = Array.isArray(res) ? res : (res?.incidencias || []);
       const capaCalor = Array.isArray(res?.capaCalor) ? res.capaCalor : null;
+
+      // Detección de cambios para evitar parpadeo y consumo de CPU innecesario en móviles
+      const hashActual = lista.map((i) => `${i.id || i.codigo}_${i.estado}_${i.confirmaciones || 0}`).join('|');
+      if (!forzar && hashActual === this.#ultimoHashDatos) {
+        return;
+      }
+      this.#ultimoHashDatos = hashActual;
+
       this.dibujarCapaCalor(lista, capaCalor);
       this.dibujarMarcadores(lista);
     } catch (err) {
@@ -563,6 +582,35 @@ export class VistaMapa {
 
       this.#capaMarcadores.addLayer(marcador);
     });
+  }
+
+  /**
+   * Agrega inmediatamente un reporte recién creado al mapa sin esperar la recarga completa.
+   * @param {object} inc
+   */
+  agregarReporteOptimista(inc) {
+    if (!this.#capaMarcadores || !inc.latitud || !inc.longitud) return;
+
+    const esCorte = inc.origen === 'corte_programado';
+    const htmlIcono = generarHtmlPin(inc.servicio, esCorte);
+
+    const icono = L.divIcon({
+      className: 'marcador-personalizado-leaflet',
+      html: htmlIcono,
+      iconSize: [32, 42],
+      iconAnchor: [16, 41],
+      popupAnchor: [0, -38],
+    });
+
+    const marcador = L.marker([inc.latitud, inc.longitud], { icon: icono });
+    marcador.on('click', () => {
+      if (typeof this.#alSeleccionarIncidencia === 'function') {
+        this.#alSeleccionarIncidencia(inc.id || inc.codigo);
+      }
+    });
+
+    this.#capaMarcadores.addLayer(marcador);
+    this.#mapa?.panTo([inc.latitud, inc.longitud], { animate: true, duration: 0.5 });
   }
 }
 
@@ -978,7 +1026,7 @@ export class FormularioReporte {
   }
 
   /**
-   * Comprime una foto en cliente a un ancho máx de 1280px y calidad 0.75 JPEG.
+   * Comprime una foto en cliente a un ancho máx de 960px y calidad 0.70 JPEG para subida rápida en móvil.
    * @param {File} file
    * @returns {Promise<string>}
    */
@@ -993,7 +1041,7 @@ export class FormularioReporte {
           const canvas = document.createElement('canvas');
           let w = img.width;
           let h = img.height;
-          const maxDim = 1280;
+          const maxDim = 960;
 
           if (w > maxDim || h > maxDim) {
             if (w > h) {
@@ -1011,7 +1059,7 @@ export class FormularioReporte {
           if (!ctx) return reject(new Error('Canvas no disponible'));
           ctx.drawImage(img, 0, 0, w, h);
 
-          const base64 = canvas.toDataURL('image/jpeg', 0.75);
+          const base64 = canvas.toDataURL('image/jpeg', 0.70);
           resolve(base64);
         };
         img.src = /** @type {string} */ (e.target?.result);
@@ -1029,7 +1077,7 @@ export class FormularioReporte {
       this.#modal.cerrar();
       Toast.mostrar(`¡Reporte creado! Código: ${resultado.codigo}`, 'exito', 5000);
       if (typeof this.#alTerminar === 'function') {
-        this.#alTerminar(resultado.id || resultado.codigo);
+        this.#alTerminar(resultado);
       }
     } catch (err) {
       if (err.status === 409 || err.codigo === 409) {
@@ -1547,8 +1595,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     fichaIncidencia.mostrar(id);
   });
 
-  const formularioReporte = new FormularioReporte(api, modal, (id) => {
-    vistaMapa.cargar(filtrosActuales);
+  const formularioReporte = new FormularioReporte(api, modal, (nuevoReporte) => {
+    if (nuevoReporte && typeof nuevoReporte === 'object' && nuevoReporte.latitud && nuevoReporte.longitud) {
+      vistaMapa.agregarReporteOptimista(nuevoReporte);
+    }
+    vistaMapa.cargar(filtrosActuales, true);
   });
 
   const vistaEstadisticas = new VistaEstadisticas(api, modal);
@@ -1562,7 +1613,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     formularioReporte.iniciar(vistaMapa.ubicacionUsuario);
     // Si no había ubicación previa, solicitarla en segundo plano para el paso 3
     if (!vistaMapa.ubicacionUsuario) {
-      vistaMapa.geolocalizarUsuario(false).then((loc) => {
+      vistaMapa.geolocalizarUsuario(false, false).then((loc) => {
         if (loc) {
           formularioReporte.actualizarUbicacionGps(loc.lat, loc.lon);
         }
@@ -1571,7 +1622,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   document.getElementById('btnMiUbicacion')?.addEventListener('click', () => {
-    vistaMapa.geolocalizarUsuario(true);
+    vistaMapa.geolocalizarUsuario(true, true);
   });
 
   document.getElementById('btnConsultar')?.addEventListener('click', () => {
@@ -1582,19 +1633,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     vistaEstadisticas.mostrar();
   });
 
-  // 3. Cargar catálogos y configurar barra de filtros
-  try {
-    catalogos = await api.obtenerCatalogos();
+  // Función para poblar la barra de filtros con los catálogos disponibles
+  const poblarFiltros = (cat) => {
+    if (!cat) return;
 
     // Inyectar chips de servicios
     const contServicios = document.getElementById('filtrosServicios');
-    if (contServicios) {
+    if (contServicios && Array.isArray(cat.servicios) && cat.servicios.length > 0) {
+      const servicioSeleccionado = filtrosActuales.servicio || '';
       contServicios.innerHTML = `
-        <button class="filtro-chip active" data-servicio="">Todos</button>
-        ${(catalogos.servicios || [])
+        <button class="filtro-chip ${servicioSeleccionado === '' ? 'active' : ''}" data-servicio="">Todos</button>
+        ${(cat.servicios || [])
           .map(
             (s) => `
-          <button class="filtro-chip" data-servicio="${s.id}">
+          <button class="filtro-chip ${servicioSeleccionado === String(s.id) ? 'active' : ''}" data-servicio="${s.id}">
             <span class="filtro-chip-icono" style="color: ${COLORES_SERVICIOS[s.id]?.color || '#111827'};">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align: middle;">
                 ${ICONOS_SERVICIOS_SVG[s.id] || ''}
@@ -1611,91 +1663,109 @@ document.addEventListener('DOMContentLoaded', async () => {
           contServicios.querySelectorAll('.filtro-chip').forEach((c) => c.classList.remove('active'));
           chip.classList.add('active');
           filtrosActuales.servicio = chip.getAttribute('data-servicio') || '';
-          vistaMapa.cargar(filtrosActuales);
+          vistaMapa.cargar(filtrosActuales, true);
         });
       });
     }
 
     // Inyectar sectores en el selector
     const selSector = /** @type {HTMLSelectElement} */ (document.getElementById('filtroSector'));
-    if (selSector && catalogos.localidades) {
-      catalogos.localidades.forEach((loc) => {
+    if (selSector && Array.isArray(cat.localidades) && cat.localidades.length > 0) {
+      selSector.innerHTML = '<option value="">Toda la ciudad</option>';
+      cat.localidades.forEach((loc) => {
         const opt = document.createElement('option');
         opt.value = String(loc.id);
         opt.textContent = loc.nombre;
         selSector.appendChild(opt);
       });
-
-      selSector.addEventListener('change', () => {
-        filtrosActuales.localidad = selSector.value;
-        vistaMapa.cargar(filtrosActuales);
-      });
     }
+  };
 
-    // Filtro selector de ventana de tiempo
-    const selVentana = /** @type {HTMLSelectElement} */ (document.getElementById('filtroVentana'));
-    if (selVentana) {
-      selVentana.addEventListener('change', () => {
-        filtrosActuales.ventana = selVentana.value || '24h';
-        vistaMapa.cargar(filtrosActuales);
-      });
-    }
+  // Selectores secundarios de filtros
+  const selSectorEl = /** @type {HTMLSelectElement} */ (document.getElementById('filtroSector'));
+  selSectorEl?.addEventListener('change', () => {
+    filtrosActuales.localidad = selSectorEl.value;
+    vistaMapa.cargar(filtrosActuales, true);
+  });
 
-    // Filtro selector de origen (falla imprevista o corte programado)
-    const selOrigen = /** @type {HTMLSelectElement} */ (document.getElementById('filtroOrigen'));
-    if (selOrigen) {
-      selOrigen.addEventListener('change', () => {
-        filtrosActuales.origen = selOrigen.value || '';
-        vistaMapa.cargar(filtrosActuales);
-      });
-    }
+  const selVentanaEl = /** @type {HTMLSelectElement} */ (document.getElementById('filtroVentana'));
+  selVentanaEl?.addEventListener('change', () => {
+    filtrosActuales.ventana = selVentanaEl.value || '24h';
+    vistaMapa.cargar(filtrosActuales, true);
+  });
 
-    // Controles de navegación y desplazamiento para chips de servicios
-    const contScroll = document.getElementById('filtrosScrollContenedor');
-    const btnScrollIzq = /** @type {HTMLButtonElement} */ (document.getElementById('btnScrollFiltrosIzq'));
-    const btnScrollDer = /** @type {HTMLButtonElement} */ (document.getElementById('btnScrollFiltrosDer'));
+  const selOrigenEl = /** @type {HTMLSelectElement} */ (document.getElementById('filtroOrigen'));
+  selOrigenEl?.addEventListener('change', () => {
+    filtrosActuales.origen = selOrigenEl.value || '';
+    vistaMapa.cargar(filtrosActuales, true);
+  });
 
-    if (contScroll) {
-      const actualizarVisibilidadFlechas = () => {
-        if (!btnScrollIzq || !btnScrollDer) return;
-        const maxScroll = contScroll.scrollWidth - contScroll.clientWidth;
-        btnScrollIzq.disabled = contScroll.scrollLeft <= 4;
-        btnScrollDer.disabled = contScroll.scrollLeft >= maxScroll - 4;
-      };
+  // Controles de navegación y desplazamiento para chips de servicios
+  const contScroll = document.getElementById('filtrosScrollContenedor');
+  const btnScrollIzq = /** @type {HTMLButtonElement} */ (document.getElementById('btnScrollFiltrosIzq'));
+  const btnScrollDer = /** @type {HTMLButtonElement} */ (document.getElementById('btnScrollFiltrosDer'));
 
-      // Desplazamiento horizontal con rueda del mouse
-      contScroll.addEventListener(
-        'wheel',
-        (evento) => {
-          if (evento.deltaY !== 0) {
-            evento.preventDefault();
-            contScroll.scrollLeft += evento.deltaY;
-            actualizarVisibilidadFlechas();
-          }
-        },
-        { passive: false }
-      );
+  if (contScroll) {
+    const actualizarVisibilidadFlechas = () => {
+      if (!btnScrollIzq || !btnScrollDer) return;
+      const maxScroll = contScroll.scrollWidth - contScroll.clientWidth;
+      btnScrollIzq.disabled = contScroll.scrollLeft <= 4;
+      btnScrollDer.disabled = contScroll.scrollLeft >= maxScroll - 4;
+    };
 
-      btnScrollIzq?.addEventListener('click', () => {
-        contScroll.scrollBy({ left: -200, behavior: 'smooth' });
-        setTimeout(actualizarVisibilidadFlechas, 250);
-      });
+    contScroll.addEventListener(
+      'wheel',
+      (evento) => {
+        if (evento.deltaY !== 0) {
+          evento.preventDefault();
+          contScroll.scrollLeft += evento.deltaY;
+          actualizarVisibilidadFlechas();
+        }
+      },
+      { passive: false }
+    );
 
-      btnScrollDer?.addEventListener('click', () => {
-        contScroll.scrollBy({ left: 200, behavior: 'smooth' });
-        setTimeout(actualizarVisibilidadFlechas, 250);
-      });
+    btnScrollIzq?.addEventListener('click', () => {
+      contScroll.scrollBy({ left: -200, behavior: 'smooth' });
+      setTimeout(actualizarVisibilidadFlechas, 250);
+    });
 
-      contScroll.addEventListener('scroll', actualizarVisibilidadFlechas, { passive: true });
-      window.addEventListener('resize', actualizarVisibilidadFlechas);
-      setTimeout(actualizarVisibilidadFlechas, 150);
-    }
+    btnScrollDer?.addEventListener('click', () => {
+      contScroll.scrollBy({ left: 200, behavior: 'smooth' });
+      setTimeout(actualizarVisibilidadFlechas, 250);
+    });
 
-    // Cargar incidencias iniciales en el mapa
-    await vistaMapa.cargar(filtrosActuales);
-  } catch (err) {
-    console.warn('Aviso al cargar catálogos iniciales:', err);
+    contScroll.addEventListener('scroll', actualizarVisibilidadFlechas, { passive: true });
+    window.addEventListener('resize', actualizarVisibilidadFlechas);
+    setTimeout(actualizarVisibilidadFlechas, 150);
   }
+
+  // 3. Carga paralela de catálogos e incidencias del mapa con caché instantánea
+  const CLAVE_CACHE_CATALOGOS = 'reportes_catalogos_v1';
+  try {
+    const enCache = localStorage.getItem(CLAVE_CACHE_CATALOGOS);
+    if (enCache) {
+      catalogos = JSON.parse(enCache);
+      poblarFiltros(catalogos);
+    }
+  } catch {}
+
+  const promCatalogos = api
+    .obtenerCatalogos()
+    .then((cat) => {
+      catalogos = cat;
+      try {
+        localStorage.setItem(CLAVE_CACHE_CATALOGOS, JSON.stringify(cat));
+      } catch {}
+      poblarFiltros(catalogos);
+    })
+    .catch((err) => {
+      console.warn('Aviso al cargar catálogos desde el servidor:', err);
+    });
+
+  const promMapa = vistaMapa.cargar(filtrosActuales, true);
+
+  await Promise.allSettled([promCatalogos, promMapa]);
 
   // 4. Monitorear estado de conexión online/offline
   const barraEstado = document.getElementById('barraEstado');
