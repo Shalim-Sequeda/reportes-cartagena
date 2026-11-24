@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { prepararCalor, crearCapaCalor } from '../cliente/js/calor.js';
+import { prepararCalor, colorizarCampo } from '../cliente/js/calor.js';
 import { GeneradorCapaCalor } from '../src/negocio/geografia.js';
 const punto = (confirmaciones = 1, lat = 10.4, lon = -75.5) => ({ lat, lon, confirmaciones, estado: 'Reportado', origen: 'falla_imprevista' });
 
@@ -36,14 +36,30 @@ test('la agrupación es determinista y no incorpora cortes ni incidencias cerrad
   assert.deepEqual(prepararCalor([{ ...punto(), peso: Infinity }]), []);
 });
 
-test('el servidor usa una referencia fija y las capas conservan la escala en todos los zoom', () => {
+test('el servidor usa una referencia fija independiente de reportes lejanos', () => {
   const solo = GeneradorCapaCalor.construir([punto()])[0];
   const junto = GeneradorCapaCalor.construir([punto(), punto(100, 10.5)])[0];
   assert.equal(solo.intensidad, junto.intensidad);
   assert.equal(solo.intensidad, .125);
-  const fake = { heatLayer: (puntos, opciones) => ({ puntos, opciones }), layerGroup: capas => capas };
-  const capas = crearCapaCalor(fake, [punto(), punto(23, 10.5)]);
-  assert.equal(capas.length, 2);
-  assert.ok(capas.every(c => c.opciones.max === 12 && c.opciones.maxZoom === 11));
-  assert.ok(capas[1].opciones.radius > capas[0].opciones.radius);
+});
+
+test('amarillo naranja y rojo tienen la misma visibilidad central', () => {
+  const campo = new Uint8ClampedArray([0, 0, 0, 32, 0, 0, 0, 138, 0, 0, 0, 255]);
+  const mascara = new Uint8ClampedArray([0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255]);
+  colorizarCampo(campo, mascara);
+  assert.equal(campo[3], 204);
+  assert.equal(campo[7], 204);
+  assert.equal(campo[11], 204);
+  assert.ok(campo[1] > campo[5] && campo[5] > campo[9]);
+  assert.equal(campo[8], 185);
+  assert.equal(campo[9], 28);
+});
+
+test('solo el borde pierde opacidad y se conserva el color para la misma densidad', () => {
+  const campo = new Uint8ClampedArray([0, 0, 0, 100, 0, 0, 0, 50, 0, 0, 0, 0]);
+  colorizarCampo(campo, new Uint8ClampedArray([0, 0, 0, 200, 0, 0, 0, 100, 0, 0, 0, 0]));
+  assert.deepEqual([...campo.slice(0, 3)], [...campo.slice(4, 7)]);
+  assert.equal(campo[3], 160);
+  assert.equal(campo[7], 80);
+  assert.equal(campo[11], 0);
 });

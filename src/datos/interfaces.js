@@ -23,6 +23,7 @@ export class IRepositorioIncidencias {
 
   /** @param {object} confirmacion */
   registrarConfirmacion(confirmacion) { throw new Error('No implementado'); }
+  yaConfirmo(incidenciaId, dispositivoHash) { throw new Error('No implementado'); }
 
   /** @param {object} voto */
   registrarVoto(voto) { throw new Error('No implementado'); }

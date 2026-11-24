@@ -2,6 +2,12 @@
 
 ## Escala gradual de calor
 
+### Visibilidad por color y confirmación propia
+
+La representación se realiza en una capa canvas de Leaflet con campos separados de densidad y cobertura. La densidad determina el color; la cobertura determina únicamente el suavizado geométrico del borde. Amarillo, naranja y rojo tienen una opacidad interior constante de 0,8, independiente del número de confirmaciones. Se conserva la agrupación y el radio gradual de 24 a 64 píxeles, con borde adicional de 18 píxeles. No se añade otra dependencia: se sustituye el renderizado previo de Leaflet.heat. La capa cancela cuadros pendientes y libera los canvas al retirarse del mapa.
+
+La consulta por identificador y por código informa confirmadoPorMi como booleano derivado de la tabla de confirmaciones y del identificador anonimizado del dispositivo de la petición. El creador ya aporta una confirmación automática y por ello no ve el botón para confirmarse de nuevo. Tampoco lo ve otro dispositivo que ya confirmó; tras una confirmación exitosa se retira inmediatamente. El servidor conserva el rechazo de duplicados y la ficha personalizada usa Cache-Control: no-store. No se devuelve el hash del dispositivo. Al ser un sistema sin cuentas ciudadanas, esta identificación se aplica al mismo dispositivo/navegador, no a una persona entre dispositivos diferentes.
+
 Se conserva el peso del dominio: 1 + 0,5 por confirmación, incluida la confirmación automática del creador. Se elimina la división por el máximo de la consulta: el servidor normaliza cada punto contra una referencia fija de 12. La representación del cliente utiliza el peso bruto y la misma referencia. Los puntos activos de fallas imprevistas se agrupan a un máximo aproximado de 120 m del punto inicial del grupo, con centro visual ponderado; no se encadenan agrupaciones entre barrios. Los cortes programados conservan sus marcadores y se excluyen del calor ciudadano.
 
 El peso de la agrupación es la suma de sus reportes y confirmaciones. Amarillo corresponde a valores bajos, naranja a valores intermedios y rojo a un peso cercano a 10 o superior. El radio visual crece de 24 a 64 píxeles según la fórmula acotada 24 + 12 × log₂(1 + max(0, peso − 1,5) / 3), redondeada a pasos de 4 píxeles, con difuminado de 18 píxeles. Se renderizan únicamente las bandas de radio presentes, con máximo 11 bandas; la intensidad no se amplifica al acercar el mapa entre los niveles 11 y 18. El borde difuminado siempre es menos intenso que el centro. Las manchas próximas pueden superponerse.

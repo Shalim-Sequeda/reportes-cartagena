@@ -171,11 +171,13 @@ export class ControladorIncidencias {
     // 7. Consulta por ID o código único
     enrutador.registrar('GET', '/api/incidencias/:id', async (req, res, { params }) => {
       const paramId = params.id;
+      res.setHeader('Cache-Control', 'no-store');
+      const dispositivoHash = obtenerDispositivoHash(req, null, this.#salDispositivo);
       // Si es un código (empieza con RC- o CP- o contiene letras)
       if (/^[a-zA-Z]/.test(paramId) || isNaN(Number(paramId))) {
-        return this.#gestorIncidencias.consultarPorCodigo(paramId);
+        return this.#gestorIncidencias.consultarPorCodigo(paramId, dispositivoHash);
       }
-      return this.#gestorIncidencias.consultarDetalle(Number(paramId));
+      return this.#gestorIncidencias.consultarDetalle(Number(paramId), dispositivoHash);
     });
   }
 }

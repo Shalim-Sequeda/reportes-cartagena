@@ -93,6 +93,26 @@ test('Integración API REST: Cartagena Reportes Ciudadanos', async (t) => {
     await app.detener();
   });
 
+  await t.test('el creador no puede volver a confirmar y su estado se consulta por id y código sin exponer identidad', async () => {
+    const creado = await peticionHttp(puerto, { method: 'POST', path: '/api/incidencias', headers: { 'X-Dispositivo': 'autor_prueba' }, body: { servicio: 2, descripcion: 'Prueba de confirmación del creador', latitud: 10.42, longitud: -75.54, origenUbicacion: 'manual', forzar: true } });
+    assert.equal(creado.status, 201);
+    for (const identificador of [creado.body.id, creado.body.codigo]) {
+      const autor = await peticionHttp(puerto, { path: '/api/incidencias/' + identificador, headers: { 'X-Dispositivo': 'autor_prueba' } });
+      const vecino = await peticionHttp(puerto, { path: '/api/incidencias/' + identificador, headers: { 'X-Dispositivo': 'vecino_prueba' } });
+      assert.equal(autor.body.confirmadoPorMi, true);
+      assert.equal(autor.headers['cache-control'], 'no-store');
+      assert.equal(vecino.body.confirmadoPorMi, false);
+      assert.ok(!autor.raw.includes('dispositivoHash'));
+      assert.ok(!autor.raw.includes('autor_prueba'));
+    }
+    const doble = await peticionHttp(puerto, { method: 'POST', path: '/api/incidencias/' + creado.body.id + '/confirmaciones', headers: { 'X-Dispositivo': 'autor_prueba' }, body: {} });
+    assert.equal(doble.status, 409);
+    const confirmacion = await peticionHttp(puerto, { method: 'POST', path: '/api/incidencias/' + creado.body.id + '/confirmaciones', headers: { 'X-Dispositivo': 'vecino_prueba' }, body: {} });
+    assert.equal(confirmacion.status, 200);
+    const vecino = await peticionHttp(puerto, { path: '/api/incidencias/' + creado.body.id, headers: { 'X-Dispositivo': 'vecino_prueba' } });
+    assert.equal(vecino.body.confirmadoPorMi, true);
+  });
+
   let tokenAdmin = '';
   let idIncidencia1 = 0;
   let codIncidencia1 = '';

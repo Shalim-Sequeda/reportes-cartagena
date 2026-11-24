@@ -1,16 +1,75 @@
 export const ESCALA_CALOR = Object.freeze({ maximo: 12, rojo: 10, distancia: 120 });
 
 export function crearCapaCalor(leaflet, datos) {
-  const porRadio = new Map();
-  for (const p of prepararCalor(datos)) {
-    if (!porRadio.has(p.radio)) porRadio.set(p.radio, []);
-    porRadio.get(p.radio).push([p.lat, p.lon, Math.min(p.peso, ESCALA_CALOR.maximo)]);
+  const grupos = prepararCalor(datos);
+  const Capa = leaflet.Layer.extend({
+    onAdd(map) {
+      this.mapa = map;
+      this.canvas = leaflet.DomUtil.create('canvas', 'leaflet-layer leaflet-zoom-hide');
+      this.canvas.style.pointerEvents = 'none';
+      this.canvas.setAttribute('aria-hidden', 'true');
+      this.campo = document.createElement('canvas');
+      this.cobertura = document.createElement('canvas');
+      map.getPane('overlayPane').appendChild(this.canvas);
+      this.programar();
+    },
+    onRemove() {
+      cancelAnimationFrame(this.frame);
+      this.canvas.remove();
+      this.mapa = null;
+      this.canvas.width = this.canvas.height = this.campo.width = this.campo.height = this.cobertura.width = this.cobertura.height = 0;
+    },
+    getEvents() { return { moveend: this.programar, zoomend: this.programar, resize: this.programar }; },
+    programar() {
+      cancelAnimationFrame(this.frame);
+      this.frame = requestAnimationFrame(() => this.dibujar());
+    },
+    dibujar() {
+      if (!this.mapa) return;
+      const size = this.mapa.getSize();
+      leaflet.DomUtil.setPosition(this.canvas, this.mapa.containerPointToLayerPoint([0, 0]));
+      for (const canvas of [this.canvas, this.campo, this.cobertura]) { canvas.width = size.x; canvas.height = size.y; }
+      const campo = this.campo.getContext('2d', { willReadFrequently: true });
+      const cobertura = this.cobertura.getContext('2d', { willReadFrequently: true });
+      const salida = this.canvas.getContext('2d');
+      if (!campo || !cobertura || !salida || !size.x || !size.y || !grupos.length) return;
+      for (const g of grupos) {
+        const p = this.mapa.latLngToContainerPoint([g.lat, g.lon]);
+        const radio = g.radio + 18;
+        if (p.x < -radio || p.y < -radio || p.x > size.x + radio || p.y > size.y + radio) continue;
+        for (const [ctx, intensidad] of [[campo, g.intensidad], [cobertura, 1]]) {
+          const gradiente = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, radio);
+          gradiente.addColorStop(0, 'rgba(0,0,0,' + intensidad + ')');
+          gradiente.addColorStop(.65, 'rgba(0,0,0,' + intensidad + ')');
+          gradiente.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = gradiente;
+          ctx.fillRect(p.x - radio, p.y - radio, radio * 2, radio * 2);
+        }
+      }
+      const imagen = campo.getImageData(0, 0, size.x, size.y);
+      colorizarCampo(imagen.data, cobertura.getImageData(0, 0, size.x, size.y).data);
+      salida.putImageData(imagen, 0, 0);
+    },
+  });
+  return new Capa();
+}
+
+// el color expresa densidad; la transparencia solo suaviza el borde espacial.
+export function colorizarCampo(campo, cobertura) {
+  const paradas = [[0, [250, 204, 21]], [.33, [251, 146, 60]], [.7, [249, 115, 22]], [10 / 12, [220, 38, 38]], [1, [185, 28, 28]]];
+  for (let i = 0; i < campo.length; i += 4) {
+    const mascara = cobertura[i + 3];
+    if (mascara < 3) { campo[i + 3] = 0; continue; }
+    const densidad = Math.min(1, campo[i + 3] / mascara);
+    let j = 1;
+    while (j < paradas.length - 1 && densidad > paradas[j][0]) j++;
+    const [inicio, a] = paradas[j - 1];
+    const [fin, b] = paradas[j];
+    const mezcla = (densidad - inicio) / (fin - inicio);
+    for (let canal = 0; canal < 3; canal++) campo[i + canal] = Math.round(a[canal] + (b[canal] - a[canal]) * mezcla);
+    campo[i + 3] = Math.round(mascara * .8);
   }
-  return leaflet.layerGroup([...porRadio].map(([radio, puntos]) => leaflet.heatLayer(puntos, {
-    radius: radio, blur: 18, max: ESCALA_CALOR.maximo,
-    maxZoom: 11, minOpacity: .06,
-    gradient: { 0: '#fde047', .25: '#facc15', .5: '#fb923c', .7: '#f97316', [ESCALA_CALOR.rojo / ESCALA_CALOR.maximo]: '#dc2626', 1: '#b91c1c' },
-  })));
+  return campo;
 }
 
 // agrupa por proximidad al punto de origen, sin encadenar barrios enteros.

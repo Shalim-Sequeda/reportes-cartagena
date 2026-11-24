@@ -166,7 +166,7 @@ export class GestorIncidencias {
    * @param {number|string} id
    * @returns {object} Incidencia con historial
    */
-  consultarDetalle(id) {
+  consultarDetalle(id, dispositivoHash = null) {
     const idNum = Number(id);
     if (!idNum || isNaN(idNum)) {
       throw new ErrorValidacion('El identificador de incidencia debe ser numérico.');
@@ -184,6 +184,7 @@ export class GestorIncidencias {
       causa: h.causa,
       fecha: h.fecha,
     }));
+    obj.confirmadoPorMi = Boolean(dispositivoHash && this.#repositorioIncidencias.yaConfirmo(idNum, dispositivoHash));
 
     return obj;
   }
@@ -193,15 +194,13 @@ export class GestorIncidencias {
    * @param {string} codigo
    * @returns {object}
    */
-  consultarPorCodigo(codigo) {
+  consultarPorCodigo(codigo, dispositivoHash = null) {
     if (!codigo || typeof codigo !== 'string') {
       throw new ErrorValidacion('El código de incidencia es obligatorio.');
     }
 
     const incidencia = this.#repositorioIncidencias.obtenerPorCodigo(codigo.trim().toUpperCase());
-    const obj = typeof incidencia.aObjeto === 'function' ? incidencia.aObjeto() : { ...incidencia };
-    obj.peso = typeof incidencia.calcularPeso === 'function' ? incidencia.calcularPeso() : (1 + 0.5 * (incidencia.confirmaciones || 0));
-    return obj;
+    return this.consultarDetalle(incidencia.id, dispositivoHash);
   }
 
   /**

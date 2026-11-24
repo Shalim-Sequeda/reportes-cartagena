@@ -289,6 +289,10 @@ export class RepositorioIncidenciasSql extends IRepositorioIncidencias {
     );
   }
 
+  yaConfirmo(incidenciaId, dispositivoHash) {
+    return this.#cx.consultar('SELECT 1 FROM confirmacion WHERE incidencia_id = ? AND dispositivo_hash = ? LIMIT 1', [incidenciaId, dispositivoHash]).length > 0;
+  }
+
   /**
    * Registra o actualiza un voto de solución (upsert).
    * @param {{ incidenciaId: number, dispositivoHash: string, valor: 'si'|'no' }} voto

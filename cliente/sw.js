@@ -1,20 +1,20 @@
 // service worker para reportes ciudadanos cartagena (pwa)
-const CACHE_NAME = 'reportes-ctg-v18';
+const CACHE_NAME = 'reportes-ctg-v19';
 const ASSETS_ESTATICOS = [
   '/',
   '/index.html',
   '/css/estilos.css',
-  '/css/estilos.css?v=18',
+  '/css/estilos.css?v=19',
   '/js/app.js',
-  '/js/app.js?v=18',
+  '/js/app.js?v=19',
   '/js/calor.js',
+  '/js/calor.js?v=19',
   '/js/ClienteApi.js',
   '/js/seguridad.js',
   '/img/icon.svg',
   '/manifest.webmanifest',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-  'https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js'
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
 ];
 
 self.addEventListener('install', (event) => {

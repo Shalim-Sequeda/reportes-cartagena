@@ -1,7 +1,7 @@
 // @ts-check
 import { ClienteApi } from './ClienteApi.js';
 import { escaparHtml } from './seguridad.js';
-import { crearCapaCalor } from './calor.js';
+import { crearCapaCalor } from './calor.js?v=19';
 
 /**
  * paleta fija de servicios y estados de cartagena.
@@ -520,7 +520,7 @@ export class VistaMapa {
    * @param {any[]|null} [capaCalorServidor=null]
    */
   dibujarCapaCalor(datos, capaCalorServidor = null) {
-    if (!this.#mapa || typeof L.heatLayer === 'undefined') return;
+    if (!this.#mapa) return;
 
     if (this.#capaCalor) {
       this.#mapa.removeLayer(this.#capaCalor);
@@ -1210,7 +1210,7 @@ export class FichaIncidencia {
         <!-- botón de confirmación -->
 
         ${
-          inc.origen !== 'corte_programado' && inc.estado === 'Reportado'
+          inc.origen !== 'corte_programado' && inc.estado === 'Reportado' && !inc.confirmadoPorMi
             ? `
           <button type="button" class="btn btn--exito btn--bloque" id="btnConfirmarFalla">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
@@ -1283,6 +1283,7 @@ export class FichaIncidencia {
       try {
         const coords = await obtenerUbicacionActual();
         const res = await this.#api.confirmarFalla(inc.id, coords);
+        document.getElementById('btnConfirmarFalla')?.remove();
         Toast.mostrar('¡Confirmación registrada con éxito!', 'exito');
         const cont = document.getElementById('contadorConfirm');
         if (cont) cont.textContent = `${res.confirmaciones} ciudadanos`;
