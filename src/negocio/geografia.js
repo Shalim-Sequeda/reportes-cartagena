@@ -193,11 +193,11 @@ export class GeneradorCapaCalor {
       return Number(inc.peso) || (1 + 0.5 * (Number(inc.confirmaciones) || 0));
     });
 
-    const maxPeso = Math.max(...pesos, 1);
+    const maxPeso = 12;
 
     return incidencias.map((inc, index) => {
       const peso = pesos[index];
-      const intensidad = Math.min(1, Math.max(0.1, Number((peso / maxPeso).toFixed(2))));
+      const intensidad = Math.min(1, Math.max(0, Number((peso / maxPeso).toFixed(4))));
 
       return {
         lat: inc.latitud,

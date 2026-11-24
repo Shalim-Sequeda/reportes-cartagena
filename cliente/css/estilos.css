@@ -2094,6 +2094,8 @@ h1, h2, h3 { letter-spacing: 0; }
 .panel-exploracion { display: contents; }
 .exploracion-cabecera { display: none; }
 .leyenda-titulo { display: none; }
+.leyenda-nota { display: none; }
+.leyenda-gradiente { background: linear-gradient(to right, #fde047, #fb923c, #dc2626); }
 #btnMiUbicacion { position: fixed; z-index: var(--z-controles); right: 16px; top: 148px; bottom: auto; width: 44px; height: 44px; min-height: 44px; padding: 0; border-radius: 6px; background: white; border: 1px solid #cbd5e1; box-shadow: var(--sombra-sm); }
 .leaflet-top.leaflet-right .leaflet-control-zoom { margin-top: 16px; margin-right: 16px; }
 @media (min-width: 769px) {
@@ -2117,6 +2119,7 @@ h1, h2, h3 { letter-spacing: 0; }
   .panel-exploracion .filtro-select { width: 100%; }
   .panel-exploracion .leyenda { position: static; display: flex; flex-wrap: wrap; justify-content: space-between; box-shadow: none; border: 0; padding: 0; margin: 0; width: 100%; gap: 8px; }
   .leyenda-titulo { display: block; flex-basis: 100%; font-size: 12px; color: #526176; margin-bottom: 4px; }
+  .leyenda-nota { display: block; flex-basis: 100%; font-size: 11px; line-height: 1.5; color: #64748b; margin-top: 6px; }
   .panel-exploracion .leyenda-gradiente { flex: 1; }
   .panel-exploracion .acciones-mapa { position: static; transform: none; display: flex; flex-direction: column; align-items: stretch; margin-top: auto; width: 100%; border: 0; box-shadow: none; padding: 8px 0 0; gap: 12px; }
   .panel-exploracion .grupo-flotante--izq { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }

@@ -1,6 +1,7 @@
 // @ts-check
 import { ClienteApi } from './ClienteApi.js';
 import { escaparHtml } from './seguridad.js';
+import { crearCapaCalor } from './calor.js';
 
 /**
  * paleta fija de servicios y estados de cartagena.
@@ -528,39 +529,8 @@ export class VistaMapa {
 
     const lista = Array.isArray(datos) ? datos : (datos?.incidencias || []);
 
-    let puntosCalor = [];
-    if (Array.isArray(capaCalorServidor) && capaCalorServidor.length > 0) {
-      puntosCalor = capaCalorServidor
-        .filter((p) => (p.latitud || p.lat) && (p.longitud || p.lon))
-        .map((p) => {
-          const lat = Number(p.latitud || p.lat);
-          const lon = Number(p.longitud || p.lon);
-          const intensidad = Number(p.intensidad ?? p.pesoNormalizado ?? Math.min((p.peso || 1) / 5, 1.0));
-          return [lat, lon, Math.max(0.2, Math.min(intensidad, 1.0))];
-        });
-    } else {
-      puntosCalor = lista
-        .filter((i) => (i.latitud || i.lat) && (i.longitud || i.lon) && (i.estado === 'Reportado' || !i.estado))
-        .map((i) => {
-          const lat = Number(i.latitud || i.lat);
-          const lon = Number(i.longitud || i.lon);
-          const peso = i.peso || (1 + 0.5 * (i.confirmaciones || 0));
-          return [lat, lon, Math.max(0.2, Math.min(peso / 5, 1.0))];
-        });
-    }
-
-    if (puntosCalor.length > 0) {
-      this.#capaCalor = L.heatLayer(puntosCalor, {
-        radius: 22,
-        blur: 12,
-        maxZoom: 16,
-        gradient: {
-          0.2: '#D97706', // Amarillo energía
-          0.5: '#EA580C', // Naranja intermedio
-          0.9: '#DC2626', // Rojo gas y emergencia
-        },
-      }).addTo(this.#mapa);
-    }
+    const fuente = Array.isArray(capaCalorServidor) ? capaCalorServidor : lista;
+    this.#capaCalor = crearCapaCalor(L, fuente).addTo(this.#mapa);
   }
 
   /**

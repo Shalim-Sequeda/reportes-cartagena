@@ -1,5 +1,13 @@
 # Ajustes de interfaz
 
+## Escala gradual de calor
+
+Se conserva el peso del dominio: 1 + 0,5 por confirmación, incluida la confirmación automática del creador. Se elimina la división por el máximo de la consulta: el servidor normaliza cada punto contra una referencia fija de 12. La representación del cliente utiliza el peso bruto y la misma referencia. Los puntos activos de fallas imprevistas se agrupan a un máximo aproximado de 120 m del punto inicial del grupo, con centro visual ponderado; no se encadenan agrupaciones entre barrios. Los cortes programados conservan sus marcadores y se excluyen del calor ciudadano.
+
+El peso de la agrupación es la suma de sus reportes y confirmaciones. Amarillo corresponde a valores bajos, naranja a valores intermedios y rojo a un peso cercano a 10 o superior. El radio visual crece de 24 a 64 píxeles según la fórmula acotada 24 + 12 × log₂(1 + max(0, peso − 1,5) / 3), redondeada a pasos de 4 píxeles, con difuminado de 18 píxeles. Se renderizan únicamente las bandas de radio presentes, con máximo 11 bandas; la intensidad no se amplifica al acercar el mapa entre los niveles 11 y 18. El borde difuminado siempre es menos intenso que el centro. Las manchas próximas pueden superponerse.
+
+Ejemplos aislados: un reporte con la confirmación del creador tiene peso 1,5 y radio 24 px; con 5 confirmaciones tiene peso 3,5 y radio 32 px; con 11, peso 6,5 y radio 40 px; con 23, peso 12,5 y radio 52 px. La intensidad se satura en 12 y el radio se limita a 64 px. Esta superficie expresa concentración de participación, no una delimitación geográfica verificada ni severidad oficial. La capa se recalcula tras consultar o confirmar.
+
 La vista de escritorio separa un panel lateral de exploración y el mapa. El panel reúne servicios, filtros, leyenda y acciones; solo la zona de filtros se desplaza cuando falta altura. La vista móvil mantiene servicios horizontales con centrado de la selección, filtros plegables y acciones inferiores etiquetadas. Zoom y ubicación se agrupan en el borde derecho del mapa. La redistribución no modifica la fórmula ni la normalización del mapa de calor.
 
 La revisión de composición incorpora filtros secundarios plegables, una barra de acciones ciudadanas con etiquetas y un asistente de reporte con servicios en filas. El asistente conserva los tres pasos, mantiene las acciones visibles mientras se desplaza el contenido y contiene/restaura el foco del teclado al abrir/cerrar. Los controles secundarios conservan sus valores al plegarse; no cambia el contrato de consulta ni de registro. Se versionan las referencias de estilos y del módulo ciudadano para evitar combinaciones de recursos anteriores.
