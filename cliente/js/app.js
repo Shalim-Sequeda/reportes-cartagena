@@ -106,6 +106,7 @@ export class Modal {
   #contenedor;
   #cuerpo;
   #alCerrarCallback = null;
+  #focoAnterior = null;
 
   /**
    * @param {string} [idContenedor='contenedorModal']
@@ -126,6 +127,16 @@ export class Modal {
 
     // cerrar con escape
     window.addEventListener('keydown', (e) => {
+      if (e.key === 'Tab' && this.estaAbierto()) {
+        const elementos = [...this.#cuerpo.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], [tabindex="0"]')].filter(el => el.getClientRects().length);
+        const primero = elementos[0];
+        const ultimo = elementos[elementos.length - 1];
+        if (e.shiftKey && (document.activeElement === primero || !this.#cuerpo.contains(document.activeElement))) {
+          e.preventDefault(); ultimo?.focus();
+        } else if (!e.shiftKey && (document.activeElement === ultimo || !this.#cuerpo.contains(document.activeElement))) {
+          e.preventDefault(); primero?.focus();
+        }
+      }
       if (e.key === 'Escape' && this.estaAbierto()) {
         this.cerrar();
       }
@@ -143,6 +154,7 @@ export class Modal {
    */
   abrir(contenido, alCerrar) {
     if (!this.#contenedor || !this.#cuerpo) return;
+    if (!this.estaAbierto()) this.#focoAnterior = document.activeElement;
     this.#alCerrarCallback = alCerrar || null;
 
     this.#cuerpo.innerHTML = '';
@@ -159,6 +171,12 @@ export class Modal {
 
     this.#contenedor.setAttribute('aria-hidden', 'false');
     this.#contenedor.classList.add('activo');
+    const titulo = this.#cuerpo.querySelector('h2');
+    if (titulo) {
+      titulo.id = this.#cuerpo.id + '-titulo';
+      this.#contenedor.querySelector('[role="dialog"]')?.setAttribute('aria-labelledby', titulo.id);
+    }
+    this.#cuerpo.querySelector('button, input, select, textarea')?.focus();
 
     // bloquear scroll del fondo
     document.body.style.overflow = 'hidden';
@@ -171,6 +189,8 @@ export class Modal {
     if (!this.#contenedor) return;
     this.#contenedor.classList.remove('activo');
     this.#contenedor.setAttribute('aria-hidden', 'true');
+    this.#focoAnterior?.focus();
+    this.#focoAnterior = null;
     document.body.style.overflow = '';
 
     if (this.#cuerpo) {
@@ -645,16 +665,15 @@ export class FormularioReporte {
     contenedor.className = 'wizard-reporte';
     contenedor.innerHTML = `
       <div class="modal-cabecera">
-        <h2 class="modal-titulo">Reportar Falla de Servicio</h2>
+        <h2 class="modal-titulo">Reportar una falla</h2>
         <button class="modal-cerrar" data-accion="cerrar-modal" aria-label="Cerrar">&times;</button>
       </div>
 
       <div class="modal-cuerpo">
         <!-- indicador de 3 pasos -->
         <div class="indicador-pasos" role="progressbar" aria-valuenow="1" aria-valuemin="1" aria-valuemax="3">
-          <div class="paso-punto activo" data-paso="1">1 · Servicio</div>
-          <div class="paso-punto" data-paso="2">2 · Descripción y foto</div>
-          <div class="paso-punto" data-paso="3">3 · Ubicación</div>
+          <span id="textoPasoReporte">Paso 1 de 3 · Servicio</span>
+          <div class="paso-progreso" aria-hidden="true"><i class="paso-punto activo" data-paso="1"></i><i class="paso-punto" data-paso="2"></i><i class="paso-punto" data-paso="3"></i></div>
         </div>
 
         <!-- paso 1: selección de servicio -->
@@ -733,9 +752,11 @@ export class FormularioReporte {
     // paso 1: servicios
     const btnsServicio = contenedor.querySelectorAll('.btn-servicio');
     btnsServicio.forEach((btn) => {
+      btn.setAttribute('aria-pressed', String(btn.classList.contains('seleccionado')));
       btn.addEventListener('click', () => {
-        btnsServicio.forEach((b) => b.classList.remove('seleccionado'));
+        btnsServicio.forEach((b) => { b.classList.remove('seleccionado'); b.setAttribute('aria-pressed', 'false'); });
         btn.classList.add('seleccionado');
+        btn.setAttribute('aria-pressed', 'true');
         this.#datos.servicio = Number(btn.getAttribute('data-servicio'));
         this.#validarPasoActual();
       });
@@ -823,6 +844,8 @@ export class FormularioReporte {
     // actualizar puntos de progreso
     contenedor.querySelector('[role=progressbar]')?.setAttribute('aria-valuenow', String(this.#pasoActual));
     const puntos = contenedor.querySelectorAll('.paso-punto');
+    const textoPaso = contenedor.querySelector('#textoPasoReporte');
+    if (textoPaso) textoPaso.textContent = 'Paso ' + this.#pasoActual + ' de 3 · ' + ['Servicio', 'Descripción y foto', 'Ubicación'][this.#pasoActual - 1];
     puntos.forEach((p, idx) => {
       const pasoNum = idx + 1;
       p.classList.toggle('activo', pasoNum === this.#pasoActual);
