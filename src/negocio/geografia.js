@@ -55,11 +55,7 @@ export class ValidadorGeografico {
 
     let barrio = null;
     if (this.#repositorioSectores?.barrioEnPunto) {
-      try {
-        barrio = this.#repositorioSectores.barrioEnPunto(latitud, longitud);
-      } catch {
-        barrio = null;
-      }
+      barrio = this.#repositorioSectores.barrioEnPunto(latitud, longitud);
     }
 
     return {

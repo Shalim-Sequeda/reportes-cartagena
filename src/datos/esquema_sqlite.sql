@@ -132,28 +132,7 @@ INSERT OR IGNORE INTO localidad (nombre) VALUES
   ('De la Virgen y Turística'),
   ('Industrial y de la Bahía');
 
--- Barrios de ejemplo — histórica y del caribe norte (id=1)
-INSERT OR IGNORE INTO barrio (nombre, localidad_id, latitud, longitud) VALUES
-  ('Centro',          1, 10.4236, -75.5480),
-  ('Getsemaní',       1, 10.4195, -75.5500),
-  ('San Diego',       1, 10.4270, -75.5460),
-  ('Manga',           1, 10.4150, -75.5420),
-  ('Bocagrande',      1, 10.3980, -75.5560),
-  ('Crespo',          1, 10.4420, -75.5230);
-
--- Barrios de ejemplo — de la virgen y turística (id=2)
-INSERT OR IGNORE INTO barrio (nombre, localidad_id, latitud, longitud) VALUES
-  ('Olaya Herrera',   2, 10.3960, -75.5100),
-  ('El Pozón',        2, 10.4100, -75.4850),
-  ('Nelson Mandela',  2, 10.3700, -75.4700),
-  ('La Boquilla',     2, 10.4600, -75.5100);
-
--- Barrios de ejemplo — industrial y de la bahía (id=3)
-INSERT OR IGNORE INTO barrio (nombre, localidad_id, latitud, longitud) VALUES
-  ('Mamonal',         3, 10.3300, -75.5050),
-  ('El Bosque',       3, 10.4050, -75.5250),
-  ('Ceballos',        3, 10.3550, -75.5100),
-  ('Pasacaballos',    3, 10.3100, -75.5000);
+-- barrios y sectores cargados desde la cartografía incluida en el servidor.
 
 -- Empresas prestadoras
 INSERT OR IGNORE INTO empresa_prestadora (nombre) VALUES

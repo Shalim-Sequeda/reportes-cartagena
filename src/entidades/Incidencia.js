@@ -18,6 +18,8 @@ export class Incidencia {
   #origenUbicacion;
   #barrio;
   #localidad;
+  #barrioNombre;
+  #localidadNombre;
   #estado;
   #confirmaciones;
   #votosSi;
@@ -44,6 +46,8 @@ export class Incidencia {
     this.#origenUbicacion = datos.origenUbicacion ?? null;
     this.#barrio = datos.barrio ?? null;
     this.#localidad = datos.localidad ?? null;
+    this.#barrioNombre = datos.barrioNombre ?? null;
+    this.#localidadNombre = datos.localidadNombre ?? null;
     this.#estado = datos.estado ?? 'Reportado';
     this.#confirmaciones = datos.confirmaciones ?? 0;
     this.#votosSi = datos.votosSi ?? 0;
@@ -213,6 +217,8 @@ export class Incidencia {
       origenUbicacion: this.#origenUbicacion,
       barrio: this.#barrio,
       localidad: this.#localidad,
+      barrioNombre: this.#barrioNombre,
+      localidadNombre: this.#localidadNombre,
       estado: this.#estado,
       confirmaciones: this.#confirmaciones,
       votosSi: this.#votosSi,

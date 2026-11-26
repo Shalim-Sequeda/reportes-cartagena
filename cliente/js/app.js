@@ -1191,7 +1191,11 @@ export class FichaIncidencia {
         <div class="ficha-meta">
           <div class="ficha-meta-item">
             <span>Barrio / Sector</span>
-            <strong>${inc.barrioNombre || inc.barrio || 'Cartagena'}</strong>
+            <strong>${escaparHtml(inc.barrioNombre || 'Sector sin identificar')}</strong>
+          </div>
+          <div class="ficha-meta-item">
+            <span>Localidad</span>
+            <strong>${escaparHtml(inc.localidadNombre || 'Sin identificar')}</strong>
           </div>
           <div class="ficha-meta-item">
             <span>Fecha reporte</span>

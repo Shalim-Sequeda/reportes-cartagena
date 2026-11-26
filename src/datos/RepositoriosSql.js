@@ -1,5 +1,6 @@
 // @ts-check
 import { randomUUID } from 'node:crypto';
+import { CartografiaSectores } from './cartografia.js';
 import {
   IRepositorioIncidencias,
   IRepositorioSectores,
@@ -22,6 +23,11 @@ import {
   RegistroBitacora,
   HistorialEstado,
 } from '../entidades/catalogos.js';
+
+const consultaIncidencias = `SELECT i.*, b.nombre AS barrio_nombre, b.localidad_id,
+  l.nombre AS localidad_nombre FROM incidencia i
+  LEFT JOIN barrio b ON b.id = i.barrio_id
+  LEFT JOIN localidad l ON l.id = b.localidad_id`;
 
 // Repositorio de incidencias
 export class RepositorioIncidenciasSql extends IRepositorioIncidencias {
@@ -48,6 +54,9 @@ export class RepositorioIncidenciasSql extends IRepositorioIncidencias {
       longitud: fila.longitud,
       origenUbicacion: fila.origen_ubicacion,
       barrio: fila.barrio_id,
+      barrioNombre: fila.barrio_nombre,
+      localidad: fila.localidad_id,
+      localidadNombre: fila.localidad_nombre,
       estado: fila.estado,
       confirmaciones: fila.confirmaciones,
       votosSi: fila.votos_si,
@@ -133,7 +142,7 @@ export class RepositorioIncidenciasSql extends IRepositorioIncidencias {
    * @returns {{ incidencia: ReporteFalla|CorteProgramado, historial: HistorialEstado[] }}
    */
   obtenerPorId(id) {
-    const filas = this.#cx.consultar('SELECT * FROM incidencia WHERE id = ?', [id]);
+    const filas = this.#cx.consultar(consultaIncidencias + ' WHERE i.id = ?', [id]);
     if (filas.length === 0) {
       throw new ErrorNoEncontrado(`Incidencia con id ${id} no encontrada.`);
     }
@@ -165,7 +174,7 @@ export class RepositorioIncidenciasSql extends IRepositorioIncidencias {
    * @returns {ReporteFalla|CorteProgramado}
    */
   obtenerPorCodigo(codigo) {
-    const filas = this.#cx.consultar('SELECT * FROM incidencia WHERE codigo = ?', [codigo]);
+    const filas = this.#cx.consultar(consultaIncidencias + ' WHERE i.codigo = ?', [codigo]);
     if (filas.length === 0) {
       throw new ErrorNoEncontrado(`Incidencia con código "${codigo}" no encontrada.`);
     }
@@ -233,7 +242,7 @@ export class RepositorioIncidenciasSql extends IRepositorioIncidencias {
     }
 
     const where = condiciones.length > 0 ? `WHERE ${condiciones.join(' AND ')}` : '';
-    const sql = `SELECT * FROM incidencia ${where} ORDER BY fecha_creacion DESC`;
+    const sql = `${consultaIncidencias} ${where} ORDER BY fecha_creacion DESC`;
 
     return this.#cx.consultar(sql, params).map((f) => this.filaAIncidencia(f));
   }
@@ -248,13 +257,15 @@ export class RepositorioIncidenciasSql extends IRepositorioIncidencias {
   listarCercanas(latitud, longitud, radio = 120) {
     const sql = `
       SELECT * FROM (
-        SELECT *,
+        SELECT i.*, b.nombre AS barrio_nombre, b.localidad_id, l.nombre AS localidad_nombre,
           6371000 * 2 * ASIN(SQRT(
-            POWER(SIN((latitud - ?) * 3.141592653589793 / 360), 2) +
-            COS(? * 3.141592653589793 / 180) * COS(latitud * 3.141592653589793 / 180) *
-            POWER(SIN((longitud - ?) * 3.141592653589793 / 360), 2)
+            POWER(SIN((i.latitud - ?) * 3.141592653589793 / 360), 2) +
+            COS(? * 3.141592653589793 / 180) * COS(i.latitud * 3.141592653589793 / 180) *
+            POWER(SIN((i.longitud - ?) * 3.141592653589793 / 360), 2)
           )) AS distancia
-        FROM incidencia
+        FROM incidencia i
+        LEFT JOIN barrio b ON b.id = i.barrio_id
+        LEFT JOIN localidad l ON l.id = b.localidad_id
         WHERE estado = 'Reportado'
       )
       WHERE distancia <= ?
@@ -494,11 +505,13 @@ export class RepositorioIncidenciasSql extends IRepositorioIncidencias {
 // Repositorio de sectores
 export class RepositorioSectoresSql extends IRepositorioSectores {
   #cx;
+  #cartografia;
 
   /** @param {import('./conexiones.js').ConexionSqlite} conexion */
   constructor(conexion) {
     super();
     this.#cx = conexion;
+    this.#cartografia = new CartografiaSectores(conexion);
   }
 
   /**
@@ -520,34 +533,25 @@ export class RepositorioSectoresSql extends IRepositorioSectores {
     if (localidadId) {
       return this.#cx
         .consultar('SELECT * FROM barrio WHERE localidad_id = ? ORDER BY nombre', [localidadId])
+        .filter(f => this.#cartografia.contieneBarrio(f.id))
         .map((f) => ({ id: f.id, nombre: f.nombre, localidadId: f.localidad_id, latitud: f.latitud, longitud: f.longitud }));
     }
     return this.#cx
       .consultar('SELECT * FROM barrio ORDER BY nombre')
+      .filter(f => this.#cartografia.contieneBarrio(f.id))
       .map((f) => ({ id: f.id, nombre: f.nombre, localidadId: f.localidad_id, latitud: f.latitud, longitud: f.longitud }));
   }
 
   /**
-   * Busca el barrio más cercano a un punto (simplístico: centroide más próximo).
+   * busca el barrio que contiene las coordenadas en la cartografía local.
    * @param {number} latitud
    * @param {number} longitud
    * @returns {Barrio|null}
    */
   barrioEnPunto(latitud, longitud) {
-    const sql = `
-      SELECT *,
-        6371000 * 2 * ASIN(SQRT(
-          POWER(SIN((latitud - ?) * 3.141592653589793 / 360), 2) +
-          COS(? * 3.141592653589793 / 180) * COS(latitud * 3.141592653589793 / 180) *
-          POWER(SIN((longitud - ?) * 3.141592653589793 / 360), 2)
-        )) AS distancia
-      FROM barrio
-      WHERE latitud IS NOT NULL AND longitud IS NOT NULL
-      ORDER BY distancia ASC
-      LIMIT 1
-    `;
-
-    const filas = this.#cx.consultar(sql, [latitud, latitud, longitud]);
+    const id = this.#cartografia.buscar(latitud, longitud);
+    if (id == null) return null;
+    const filas = this.#cx.consultar('SELECT * FROM barrio WHERE id = ?', [id]);
     if (filas.length === 0) return null;
     const f = filas[0];
     return new Barrio({ id: f.id, nombre: f.nombre, localidadId: f.localidad_id });

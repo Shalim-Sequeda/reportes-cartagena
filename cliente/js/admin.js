@@ -1,7 +1,7 @@
 // @ts-check
 import { escaparHtml, limpiarCredenciales } from './seguridad.js';
 import { ClienteApi } from './ClienteApi.js';
-import { COLORES_SERVICIOS, Modal, Toast, generarHtmlPin } from './app.js?v=20';
+import { COLORES_SERVICIOS, Modal, Toast, generarHtmlPin } from './app.js?v=22';
 import { mostrarEstadisticas } from './estadisticasVista.js?v=21';
 
 /**
@@ -312,7 +312,7 @@ export class ConsolaAdmin {
         <td>
           <span class="badge-estado badge-estado--${inc.estado.toLowerCase()}">${inc.estado}</span>
         </td>
-        <td>${escaparHtml(inc.barrioNombre || inc.barrio || 'Cartagena')}</td>
+        <td>${escaparHtml(inc.barrioNombre || 'Sector sin identificar')}</td>
         <td>${fechaStr}</td>
         <td>
           <div style="display:flex;gap:6px;">

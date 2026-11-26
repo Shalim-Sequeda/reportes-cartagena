@@ -134,10 +134,7 @@ export class GestorIncidencias {
       }
     }
 
-    const resultado = reporte.aObjeto();
-    resultado.peso = reporte.calcularPeso();
-    resultado.barrioNombre = sector.barrioNombre;
-    return resultado;
+    return this.consultarDetalle(id, dispositivoHash);
   }
 
   /**

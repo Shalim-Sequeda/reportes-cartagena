@@ -103,8 +103,7 @@ export class GestorCortes {
       });
     }
 
-    const resultado = corte.aObjeto();
-    return resultado;
+    return this.#repositorioIncidencias.obtenerPorId(id).incidencia.aObjeto();
   }
 
   /**
